@@ -65,6 +65,10 @@ where name = 'Test Product';
 delete from Product
 where name = 'Test Product';
 
-select * fromProduct
+select * from Product
 where name = 'Test Product';
 
+select name, price from Product
+order by price desc limit 5;
+
+select text, date from review where extract(month from date) = 10;
