@@ -21,7 +21,7 @@ group by product_type_id
 having sum(quantity) > 180 );
 
 select distinct name from manufacturer;
-SELECT DISTINCT manufacturer_id from product order by manufacturer_id asc;
+select distinct manufacturer_id from product order by manufacturer_id asc;
 
 select name from position where name <> 'Developer';
 
@@ -44,3 +44,27 @@ where price > ALL (select avg(price) from product group by product_type_id);
 
 select name, price from product
 where price < ANY (select avg(price) from product group by product_type_id);
+
+select * from product;
+alter table Product add column created_at DATE;
+select * from product;
+
+update Product 
+set created_at = current_date;
+select * from product;
+
+alter table Product drop column created_at;
+select * from product;
+
+insert into Product (name, description, price, product_type_id, manufacturer_id, unit_of_measure_id, quantity)
+values ('Test Product', 'This is a test product', 9.99, 1, 1, 1, 10);
+
+select * from Product
+where name = 'Test Product';
+
+delete from Product
+where name = 'Test Product';
+
+select * fromProduct
+where name = 'Test Product';
+
