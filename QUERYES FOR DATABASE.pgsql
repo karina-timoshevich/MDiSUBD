@@ -72,3 +72,11 @@ select name, price from Product
 order by price desc limit 5;
 
 select text, date from review where extract(month from date) = 10;
+
+select name, price,
+    case
+        when price > 1000 then 'Premium'
+        when price > 500 then 'Standard'
+        else 'Budget'
+    end as price_category
+from Product;
