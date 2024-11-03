@@ -1,6 +1,5 @@
 --Нужно получить список всех сотрудников, чьи фамилии начинаются на букву "S",
 -- а их должность не является "Developer"
-
 select * from employee;
 select * from position;
 select first_name, last_name, position_id from employee
@@ -15,7 +14,7 @@ select name, price, quantity from product
 where quantity>50 and price< (select round(avg(price),2) from product);
 select round(avg(price),2) from product;
 
---Найти клиентов, которые имеют заказы с использованием не 1 промокода
+--Найти клиентов, которые имеют заказы с использованием не первого промокода
 select * from orders;
 select * from client;
 select first_name, last_name from client
@@ -78,7 +77,42 @@ cross join position p;
 
 --Напишите запрос, который возвращает список всех пар продуктов, 
 --произведённых одним и тем же производителем
-select p1.name as name1,
-       p2.name as name2
+select p1.name as name1, p2.name as name2
 from product p1
 join product p2 on p1.manufacturer_id = p2.manufacturer_id and p1.id <> p2.id;
+
+--Получить список клиентов, которые сделали заказы, 
+--и суммарную стоимость всех их заказов
+select sum(o.total_price) as total_spent, c.first_name, c.last_name from orders o
+inner join client c on o.client_id = c.id
+group by c.id;
+
+--Получить список продуктов и их производителей, но только для тех продуктов,
+--по которым были сделаны заказы
+select product.name, manufacturer.name from product
+inner join manufacturer on product.manufacturer_id = manufacturer.id
+inner join orderitem on orderitem.product_id = product.id
+group by product.id, manufacturer.id;
+
+--Получить список клиентов, которые сделали заказы, и только те заказы, 
+--которые не отменены
+select * from orders;
+select client.first_name, client.last_name, orders.id, orders.status from client
+inner join orders on client.id = orders.client_id
+where orders.status <> 'Cancelled';
+
+--Получить список продуктов, их производителей и статус запасов 
+--(достаточно ли на складе)
+select product.name, manufacturer.name,
+case
+    when product.quantity=0 then 'need to replenish supplies'
+    when product.quantity<100 then 'will end soon'
+    else 'enough for now'
+end as stock_status
+from product inner join manufacturer on manufacturer.id = product.manufacturer_id;
+
+--Найти производителей и продукты, у которых средняя цена
+--выше определенного значения
+select product.name, product.price, manufacturer.name from product
+inner join manufacturer on product.manufacturer_id = manufacturer.id
+where price > 100;
