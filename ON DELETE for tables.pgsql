@@ -1,0 +1,31 @@
+ALTER TABLE Employee
+DROP CONSTRAINT IF EXISTS Employee_position_id_fkey,
+ADD FOREIGN KEY (position_id) REFERENCES Position(id) ON DELETE SET NULL;
+
+ALTER TABLE Employee_Action
+DROP CONSTRAINT IF EXISTS Employee_Action_employee_id_fkey,
+ADD FOREIGN KEY (employee_id) REFERENCES Employee(id) ON DELETE CASCADE;
+
+ALTER TABLE Employee_Action
+DROP CONSTRAINT IF EXISTS Employee_Action_action_id_fkey,
+ADD FOREIGN KEY (action_id) REFERENCES Action(id) ON DELETE CASCADE;
+
+ALTER TABLE Log
+DROP CONSTRAINT IF EXISTS Log_employee_id_fkey,
+ADD FOREIGN KEY (employee_id) REFERENCES Employee(id) ON DELETE CASCADE;
+
+ALTER TABLE Log
+DROP CONSTRAINT IF EXISTS Log_action_id_fkey,
+ADD FOREIGN KEY (action_id) REFERENCES Action(id) ON DELETE CASCADE;
+
+ALTER TABLE CartItem
+DROP CONSTRAINT IF EXISTS CartItem_cart_id_fkey,
+ADD FOREIGN KEY (cart_id) REFERENCES Cart(client_id) ON DELETE CASCADE;
+
+ALTER TABLE Orders
+DROP CONSTRAINT IF EXISTS Orders_client_id_fkey,
+ADD FOREIGN KEY (client_id) REFERENCES Client(id) ON DELETE RESTRICT;
+
+ALTER TABLE OrderItem
+DROP CONSTRAINT IF EXISTS OrderItem_order_id_fkey,
+ADD FOREIGN KEY (order_id) REFERENCES Orders(id) ON DELETE CASCADE;
