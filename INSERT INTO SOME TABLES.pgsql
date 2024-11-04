@@ -18,7 +18,8 @@ INSERT INTO Manufacturer (name, address, phone)
 VALUES 
 ('TechCorporation', '123 Tech Street', '+375298459612'),
 ('OldBeautiful', '98 OLd street', '+375298478916'),
-('FashionisMyProfession', '707 Fashion Avenu', '+375335684526');
+('FashionisMyProfession', '707 Fashion Avenu', '+375335684526'),
+('Sweet Life', '121 Long streer', '+375441648924');
 
 INSERT INTO UnitOfMeasure (name)
 VALUES ('Piece'), ('Kilogram'), ('Liter'), ('Meter'),('Gram');
@@ -29,7 +30,8 @@ VALUES
 ('T-Shirt', '100% cotton T-shirt', 19.99, 2, 2, 1, 200),
 ('Lipstick', 'Lipstick for kids', 29.99, 3, 3, 1, 150),
 ('Chocolate Bar', 'Delicious milk chocolate bar', 2.50, 4, 1, 1, 300),
-('Novel Book', 'Best-selling novel from popular author', 15.99, 5, 1, 1, 100);
+('Novel Book', 'Best-selling novel from popular author', 15.99, 5, 1, 1, 100),
+('Sour candy', 'Favorite sour candies with frut filling', 12.20, 4, 4, 2, 144);
 
 INSERT INTO PromoCode (code, discount)
 VALUES 
@@ -53,7 +55,9 @@ VALUES
 ('Bob', 'Miller', '1985-07-10', '+375332145678', 'qwerty789'),
 ('Charlie', 'Brown', '1995-05-22', '+375259876543', 'charlie123'),
 ('Diana', 'Prince', '1988-12-05', '+375291234890', 'diana2020'),
-('Edward', 'Norton', '1992-11-30', '+375256789012', 'edward987');
+('Edward', 'Norton', '1992-11-30', '+375256789012', 'edward987'),
+('Karina', 'Timoshevich', '2005-01-03', '+375292568820', 'user1234'),
+('Harry', 'Potter', '1980-07-31', '+375123456789', 'avadakedavra');
 
 INSERT INTO Cart (client_id, total_price)
 VALUES 
@@ -77,7 +81,9 @@ VALUES
 (2, '2024-10-08 14:30:00', 120.50, 2, 2, 'Shipped'), 
 (3, '2024-10-07 09:15:00', 85.00, 3, 3, 'Delivered'), 
 (4, '2024-10-06 16:45:00', 55.00, 4, 4, 'Cancelled'), 
-(5, '2024-10-05 11:00:00', 110.99, 5, 5, 'Completed');
+(5, '2024-10-05 11:00:00', 110.99, 5, 5, 'Completed'),
+(1, '2024-10-09 10:00:00', 48.65, 1, 2, 'Shipped'), 
+(2, '2024-10-08 14:30:00', 12.10, 3, 2, 'Shipped');
 
 INSERT INTO OrderItem (product_id, quantity, order_id)
 VALUES 

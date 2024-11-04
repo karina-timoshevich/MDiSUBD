@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS Employee (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    position_id INT NOT NULL REFERENCES Position(id),
+    position_id INT REFERENCES Position(id) ON DELETE SET NULL,
     phone VARCHAR(20) NOT NULL,
     email VARCHAR(100) NOT NULL
 );
@@ -73,12 +73,12 @@ CREATE TABLE IF NOT EXISTS CartItem (
     id SERIAL PRIMARY KEY,
     product_id INT NOT NULL REFERENCES Product(id),
     quantity INT NOT NULL DEFAULT 1,
-    cart_id INT NOT NULL REFERENCES Cart(client_id)
+    cart_id INT NOT NULL REFERENCES Cart(client_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Orders (
     id SERIAL PRIMARY KEY,
-    client_id INT NOT NULL REFERENCES Client(id),
+    client_id INT NOT NULL  REFERENCES Client(id) ON DELETE RESTRICT,
     order_date TIMESTAMP NOT NULL,
     total_price DECIMAL(10, 2) NOT NULL,
     promo_code_id INT REFERENCES PromoCode(id),
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS OrderItem (
     id SERIAL PRIMARY KEY,
     product_id INT NOT NULL REFERENCES Product(id),
     quantity INT NOT NULL DEFAULT 1,
-    order_id INT NOT NULL REFERENCES Orders(id)
+    order_id INT NOT NULL REFERENCES Orders(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Review (

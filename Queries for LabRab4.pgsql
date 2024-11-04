@@ -14,7 +14,7 @@ select name, price, quantity from product
 where quantity>50 and price< (select round(avg(price),2) from product);
 select round(avg(price),2) from product;
 
---Найти клиентов, которые имеют заказы с использованием не первого промокода
+--Найти клиентов, которые имеют заказы с использованием не 1 промокода
 select * from orders;
 select * from client;
 select first_name, last_name from client
@@ -116,3 +116,17 @@ from product inner join manufacturer on manufacturer.id = product.manufacturer_i
 select product.name, product.price, manufacturer.name from product
 inner join manufacturer on product.manufacturer_id = manufacturer.id
 where price > 100;
+
+--Напишите запрос, который возвращает список категорий продуктов и общее 
+--количество продуктов в каждой категории, где количество продуктов превышает 10
+select * from product;
+select product_type_id, count(*) as product_count 
+from product 
+group by product_type_id 
+having count(*) < 10;
+
+--Найдите среднюю цену продуктов по каждому типу продукта
+select producttype.name, round(avg(price),2) 
+from  product
+inner join producttype on product.product_type_id = producttype.id
+group by  producttype.name
