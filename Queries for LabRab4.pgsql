@@ -175,3 +175,13 @@ UNION
 select first_name, last_name, 
 'Employee' as role
 from employee;
+
+--Выведите список клиентов, у которых есть товары в корзине, 
+--вместе с их именами и фамилиями
+select c.id, c.first_name, c.last_name 
+from client c 
+where exists (
+    select 1 
+    from CartItem ci 
+    where ci.cart_id = c.id
+);
