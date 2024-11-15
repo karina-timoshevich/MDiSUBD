@@ -194,6 +194,13 @@ from Product p
 inner join Manufacturer m on m.id = p.manufacturer_id
 group by m.name;
 
+explain analyze
+select m.name, 
+       count(p.id) as total_products, 
+       sum(p.quantity) as total_quantity
+from Product p
+inner join Manufacturer m on m.id = p.manufacturer_id
+group by m.name;
 
 create table TempTable (
     id serial PRIMARY KEY,
@@ -208,3 +215,56 @@ where quantity > 100;
 
 select * from TempTable;
 drop table TempTable;
+
+/*
+INSERT INTO CartItem (product_id, quantity, cart_id)
+VALUES 
+(1, 3, 1), 
+(3, 4, 3),  
+(5, 2, 5), 
+(2, 3, 2),  
+(4, 7, 4);  
+
+INSERT INTO Orders (client_id, order_date, total_price, promo_code_id, pickup_location_id, status)
+VALUES 
+(1, '2024-10-10 14:00:00', 159.99, 1, 2, 'Shipped'), 
+(3, '2024-10-10 15:00:00', 120.00, 2, 2, 'Shipped'), 
+(5, '2024-10-10 16:00:00', 80.00, 3, 3, 'Shipped'), 
+(2, '2024-10-11 12:00:00', 55.00, 4, 4, 'Shipped'),
+(4, '2024-10-12 17:00:00', 85.00, 5, 5, 'Shipped');
+INSERT INTO OrderItem (product_id, quantity, order_id)
+VALUES 
+(1, 3, 6),  
+(2, 3, 7),  
+(5, 2, 8),  
+(4, 7, 9),  
+(3, 4, 10);  
+
+INSERT INTO CartItem (product_id, quantity, cart_id)
+VALUES 
+(1, 2, 3);
+INSERT INTO Orders (client_id, order_date, total_price, promo_code_id, pickup_location_id, status)
+VALUES 
+(3, '2024-10-10 14:00:00', 159.99, 1, 2, 'Shipped');
+INSERT INTO OrderItem (product_id, quantity, order_id)
+VALUES 
+(1, 2, 9);
+*/
+
+select first_name, last_name, name, product_count
+from (
+    select
+        c.first_name, 
+        c.last_name, 
+        p.name, 
+        count(oi.product_id) as product_count,
+      row_number() over(partition by c.id order by count(oi.product_id)  DESC) as row_num
+    from 
+        client c
+    join orders o on c.id = o.client_id
+    join OrderItem oi ON o.id = oi.order_id
+    join product p ON oi.product_id = p.id
+    group by c.id, p.id
+) as ranked
+where row_num = 1
+order by ranked.first_name, ranked.last_name;
