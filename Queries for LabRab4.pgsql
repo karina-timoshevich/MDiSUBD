@@ -185,3 +185,26 @@ where exists (
     from CartItem ci 
     where ci.cart_id = c.id
 );
+
+explain
+select m.name, 
+       count(p.id) as total_products, 
+       sum(p.quantity) as total_quantity
+from Product p
+inner join Manufacturer m on m.id = p.manufacturer_id
+group by m.name;
+
+
+create table TempTable (
+    id serial PRIMARY KEY,
+    name varchar(50),
+    quantity int
+);
+
+insert into TempTable (name, quantity)
+select name, quantity
+from product
+where quantity > 100;
+
+select * from TempTable;
+drop table TempTable;
