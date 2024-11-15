@@ -129,4 +129,39 @@ having count(*) < 10;
 select producttype.name, round(avg(price),2) 
 from  product
 inner join producttype on product.product_type_id = producttype.id
-group by  producttype.name
+group by  producttype.name;
+
+--Посчитайте, сколько заказов (Orders) было сделано каждым клиентом, и выведите 
+--информацию по каждому заказу, добавив колонку с общим количеством заказов клиента.
+select orders.id as order_id, first_name, last_name,
+count(orders.id) over(partition by client_id) as orders_per_client
+from orders inner join client on orders.client_id = client.id;
+
+--Для каждого клиента найдите дату самого первого и самого последнего заказа
+select client_id,
+first_value(order_date) over(partition by client_id order by order_date asc) as first_order_date,
+last_value(order_date) over(partition by client_id order by order_date asc ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as last_order_date
+from orders;
+
+select * from orders;
+--Для каждого заказа найдите дату предыдущего и следующего заказа клиента
+select client_id, order_date,
+lag(order_date) over(partition by client_id order by order_date) as previous_order_date,
+lead(order_date) over(partition by client_id order by order_date) as next_order_date
+from orders;
+
+--Для каждого производителя подсчитайте количество товаров, которые они производят, 
+--и количество товаров на складе
+select * from product;
+select m.name,
+count(p.id) over(partition by p.manufacturer_id) as total_products,
+sum(p.quantity) over(partition by p.manufacturer_id) as total_quantity
+from product p
+inner join manufacturer m on m.id = p.manufacturer_id;
+
+--использовать различные виды ранжирования
+select id as order_id, client_id, order_date,
+rank() over(order by client_id asc) as rank_by_client,
+dense_rank() over (partition by client_id order by order_date asc) as dense_rank_by_client,
+row_number() over (order by id asc) as row_number_by_order
+from orders;
