@@ -165,3 +165,13 @@ rank() over(order by client_id asc) as rank_by_client,
 dense_rank() over (partition by client_id order by order_date asc) as dense_rank_by_client,
 row_number() over (order by id asc) as row_number_by_order
 from orders;
+
+--Получите список всех клиентов и сотрудников, указав их имена и роли 
+--("Client" или "Employee") в едином списке
+select first_name, last_name,
+'Client' as role 
+from client
+UNION
+select first_name, last_name, 
+'Employee' as role
+from employee;
