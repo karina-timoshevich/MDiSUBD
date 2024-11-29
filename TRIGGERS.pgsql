@@ -14,7 +14,21 @@ AFTER INSERT ON OrderItem
 FOR EACH ROW
 EXECUTE FUNCTION decrease_product_quantity_on_order();
 
---над возвратом подумать
+CREATE OR REPLACE FUNCTION increase_product_quantity_on_order_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Product
+    SET quantity = quantity + OLD.quantity
+    WHERE id = OLD.product_id;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_increase_product_quantity_on_order_delete
+AFTER DELETE ON OrderItem
+FOR EACH ROW
+EXECUTE FUNCTION increase_product_quantity_on_order_delete();
 
 CREATE OR REPLACE FUNCTION recalculate_order_total_price()
 RETURNS TRIGGER AS $$
@@ -56,3 +70,106 @@ CREATE TRIGGER trigger_recalculate_order_total_price_after_delete
 AFTER DELETE ON OrderItem
 FOR EACH ROW
 EXECUTE FUNCTION recalculate_order_total_price_on_delete();
+
+CREATE OR REPLACE FUNCTION log_product_addition()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO Log (employee_id, action_id, action_date)
+    VALUES (current_setting('app.employee_id')::INT, 
+            (SELECT id FROM Action WHERE name = 'Add Product'), 
+            CURRENT_TIMESTAMP);
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_log_product_addition
+AFTER INSERT ON Product
+FOR EACH ROW
+EXECUTE FUNCTION log_product_addition();
+
+SELECT * FROM Log;
+
+CREATE OR REPLACE FUNCTION log_product_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO Log (employee_id, action_id, action_date)
+    VALUES (current_setting('app.employee_id')::INT, 
+            (SELECT id FROM Action WHERE name = 'Update Product'), 
+            CURRENT_TIMESTAMP);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trigger_log_product_update
+AFTER UPDATE ON Product
+FOR EACH ROW
+EXECUTE FUNCTION log_product_update();
+
+CREATE OR REPLACE FUNCTION log_product_deletion()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO Log (employee_id, action_id, action_date)
+    VALUES (current_setting('app.employee_id')::INT, 
+            (SELECT id FROM Action WHERE name = 'Delete Product'), 
+            CURRENT_TIMESTAMP);
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_log_product_deletion
+AFTER DELETE ON Product
+FOR EACH ROW
+EXECUTE FUNCTION log_product_deletion();
+
+CREATE OR REPLACE FUNCTION log_order_status_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO Log (employee_id, action_id, action_date)
+    VALUES (current_setting('app.employee_id')::INT, 
+            (SELECT id FROM Action WHERE name = 'Update Order Status'), 
+            CURRENT_TIMESTAMP);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_log_order_status_update
+AFTER UPDATE OF status ON Orders
+FOR EACH ROW
+EXECUTE FUNCTION log_order_status_update();
+
+CREATE OR REPLACE FUNCTION log_job_addition()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO Log (employee_id, action_id, action_date)
+    VALUES (current_setting('app.employee_id')::INT, 
+            (SELECT id FROM Action WHERE name = 'Add Job'), 
+            CURRENT_TIMESTAMP);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_log_job_addition
+AFTER INSERT ON Job
+FOR EACH ROW
+EXECUTE FUNCTION log_job_addition();
+
+CREATE OR REPLACE FUNCTION log_job_deletion()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO Log (employee_id, action_id, action_date)
+    VALUES (current_setting('app.employee_id')::INT, 
+            (SELECT id FROM Action WHERE name = 'Delete Job'), 
+            CURRENT_TIMESTAMP);
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_log_job_deletion
+AFTER DELETE ON Job
+FOR EACH ROW
+EXECUTE FUNCTION log_job_deletion();

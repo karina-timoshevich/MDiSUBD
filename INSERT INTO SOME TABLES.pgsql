@@ -117,3 +117,11 @@ VALUES
 ('HR Specialist', 'Handles recruitment, employee relations, and compliance.'),
 ('Marketing Manager', 'Leads marketing campaigns and promotes brand awareness.');
 
+INSERT INTO Action (name, description) VALUES 
+    ('Add Product', 'Добавление нового товара'),
+    ('Update Product', 'Редактирование товара'),
+    ('Delete Product', 'Удаление товара'),
+    ('Update Order Status', 'Изменение статуса заказа'),
+    ('Add Job', 'Добавление новой вакансии'),
+    ('Update Job', 'Редактирование вакансии'),
+    ('Delete Job', 'Удаление вакансии');
