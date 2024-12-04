@@ -1,0 +1,31 @@
+﻿@{
+    var products = ViewBag.Products as List<LabRab6_MDiSUBD_Timoshevich.Entities.Product>;  // Указываем правильное пространство имен
+}
+
+<h1>Test Product List</h1>
+@if (products != null && products.Any())
+{
+    <table border="1">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Price</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var product in products)
+        {
+            <tr>
+                <td>@product.Id</td>
+                <td>@product.Name</td>
+                <td>@product.Price</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No products found.</p>
+}

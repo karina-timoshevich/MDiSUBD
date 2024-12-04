@@ -1,7 +1,11 @@
+using LabRab6_MDiSUBD_Timoshevich.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+
+builder.Services.AddScoped<DbService>();
 
 var app = builder.Build();
 
