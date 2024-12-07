@@ -11,21 +11,42 @@ public class ReviewController : Controller
         _dbService = dbService;
     }
 
-    // Просмотр отзывов
     public async Task<IActionResult> Index()
     {
         var reviews = await _dbService.GetReviews();
         return View(reviews);
     }
 
-    // Добавление отзыва
-    [HttpPost]
-    public async Task<IActionResult> AddReview(int clientId, int rating, string text)
+    [HttpGet]
+    public IActionResult AddReview()
     {
-        var success = await _dbService.AddReview(clientId, rating, text);
-        if (success)
-            return RedirectToAction("Index");
-
-        return View("Error");
+        return View();
     }
+
+    [HttpPost]
+    [HttpPost]
+    public async Task<IActionResult> AddReview(int rating, string text)
+    {
+        var clientId = HttpContext.Session.GetInt32("ClientId");
+        if (clientId == null)
+        {
+            TempData["ErrorMessage"] = "You need to be logged in to add a review.";
+            return RedirectToAction("Login", "Account");
+        }
+
+        // Передаем три параметра в метод AddReview сервиса
+        var isSuccess = await _dbService.AddReview(clientId.Value, rating, text);
+
+        if (isSuccess)
+        {
+            TempData["SuccessMessage"] = "Your review has been added.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Failed to add your review. Please try again.";
+        }
+
+        return RedirectToAction("Index"); // Возврат к списку отзывов
+    }
+
 }

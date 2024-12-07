@@ -355,7 +355,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 {
                     await conn.OpenAsync();
 
-                    var query = "INSERT INTO Review (client_id, rating, text) VALUES (@client_id, @rating, @text)";
+                    var query = "INSERT INTO Review (client_id, rating, text, date) VALUES (@client_id, @rating, @text, CURRENT_TIMESTAMP)";
                     await using (var cmd = new NpgsqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("client_id", clientId);
