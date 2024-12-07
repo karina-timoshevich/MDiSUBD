@@ -1,0 +1,21 @@
+﻿@model List<LabRab6_MDiSUBD_Timoshevich.Entities.PickupLocation>
+
+<h2>Pickup Locations</h2>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Address</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var location in Model)
+    {
+        <tr>
+            <td>@location.Name</td>
+            <td>@location.Address</td>
+        </tr>
+    }
+    </tbody>
+</table>

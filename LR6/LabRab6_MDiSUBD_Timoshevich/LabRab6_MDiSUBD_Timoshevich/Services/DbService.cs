@@ -68,7 +68,6 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
             return products;
         }
 
-
         public async Task<Client> GetClientByEmail(string email)
         {
             Client client = null;
@@ -275,5 +274,42 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 Console.WriteLine($"Error: {ex.Message}");
             }
         }
+        public async Task<List<PickupLocation>> GetAllPickupLocations()
+        {
+            var pickupLocations = new List<PickupLocation>();
+
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    // Запрос на выборку всех пунктов выдачи
+                    var query = "SELECT Id, Name, Address FROM PickupLocation";
+                    await using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        await using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                pickupLocations.Add(new PickupLocation
+                                {
+                                    Id = reader.GetInt32(0),
+                                    Name = reader.GetString(1),
+                                    Address = reader.GetString(2)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return pickupLocations;
+        }
+
     }
 }
