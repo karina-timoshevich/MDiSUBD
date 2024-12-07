@@ -26,20 +26,35 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 {
                     await conn.OpenAsync();
 
-                    await using (var cmd = new NpgsqlCommand("SELECT id, name, price FROM product", conn))
+                    // Запрос на выборку всех продуктов с дополнительными данными (тип, производитель и т.д.)
+                    var query = @"
+                SELECT 
+                    p.Id, p.Name, p.Description, p.Price, p.Quantity,
+                    pt.name AS ProductType, 
+                    m.name AS ManufacturerName, 
+                    uom.name AS UnitOfMeasure
+                FROM Product p
+                JOIN ProductType pt ON p.product_type_id = pt.id
+                JOIN Manufacturer m ON p.manufacturer_id = m.id
+                JOIN UnitOfMeasure uom ON p.unit_of_measure_id = uom.id";
+
+                    await using (var cmd = new NpgsqlCommand(query, conn))
                     {
                         await using (var reader = await cmd.ExecuteReaderAsync())
                         {
                             while (await reader.ReadAsync())
                             {
-                                var product = new Product
+                                products.Add(new Product
                                 {
-                                    Id = (int)reader["id"],
-                                    Name = reader["name"].ToString(),
-                                    Price = (decimal)reader["price"]
-                                };
-
-                                products.Add(product);
+                                    Id = reader.GetInt32(0),
+                                    Name = reader.GetString(1),
+                                    Description = reader.GetString(2),
+                                    Price = reader.GetDecimal(3),
+                                    Quantity = reader.GetInt32(4),
+                                    ProductType = reader.GetString(5),
+                                    ManufacturerName = reader.GetString(6),
+                                    UnitOfMeasure = reader.GetString(7)
+                                });
                             }
                         }
                     }
@@ -52,6 +67,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
             return products;
         }
+
 
         public async Task<Client> GetClientByEmail(string email)
         {

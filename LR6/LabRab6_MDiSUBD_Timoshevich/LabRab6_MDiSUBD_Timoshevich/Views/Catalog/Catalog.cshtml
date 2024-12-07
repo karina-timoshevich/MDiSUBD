@@ -1,0 +1,47 @@
+﻿@model List<LabRab6_MDiSUBD_Timoshevich.Entities.Product>
+
+<h2>Product Catalog</h2>
+
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    table, th, td {
+        border: 1px solid black;
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: left;
+    }
+</style>
+
+<table>
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Price</th>
+        <th>Type</th>
+        <th>Manufacturer</th>
+        <th>Unit of Measure</th>
+        <th>Quantity</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var product in Model)
+    {
+        <tr>
+            <td>@product.Name</td>
+            <td>@product.Description</td>
+            <td>@product.Price.ToString("F2")</td>
+            <td>@product.ProductType</td>
+            <td>@product.ManufacturerName</td>
+            <td>@product.UnitOfMeasure</td>
+            <td>@product.Quantity</td>
+        </tr>
+    }
+    </tbody>
+</table>
