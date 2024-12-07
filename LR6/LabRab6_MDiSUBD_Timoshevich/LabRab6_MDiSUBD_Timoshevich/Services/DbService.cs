@@ -310,6 +310,69 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
             return pickupLocations;
         }
+        public async Task<List<Review>> GetReviews()
+        {
+            var reviews = new List<Review>();
+
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    var query = "SELECT id, client_id, rating, text, date FROM Review ORDER BY date DESC";
+                    await using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        await using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                reviews.Add(new Review
+                                {
+                                    Id = reader.GetInt32(0),
+                                    ClientId = reader.GetInt32(1),
+                                    Rating = reader.GetInt32(2),
+                                    Text = reader.IsDBNull(3) ? null : reader.GetString(3),
+                                    Date = reader.GetDateTime(4)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return reviews;
+        }
+        public async Task<bool> AddReview(int clientId, int rating, string text)
+        {
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    var query = "INSERT INTO Review (client_id, rating, text) VALUES (@client_id, @rating, @text)";
+                    await using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("client_id", clientId);
+                        cmd.Parameters.AddWithValue("rating", rating);
+                        cmd.Parameters.AddWithValue("text", (object)text ?? DBNull.Value);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return false;
+            }
+        }
 
     }
 }

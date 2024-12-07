@@ -1,0 +1,24 @@
+﻿@model List<LabRab6_MDiSUBD_Timoshevich.Entities.Review>
+
+<h2>Reviews</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>Client</th>
+        <th>Rating</th>
+        <th>Text</th>
+        <th>Date</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var review in Model)
+    {
+        <tr>
+            <td>@review.ClientId</td>
+            <td>@review.Rating</td>
+            <td>@review.Text</td>
+            <td>@review.Date.ToString("g")</td>
+        </tr>
+    }
+    </tbody>
+</table>
