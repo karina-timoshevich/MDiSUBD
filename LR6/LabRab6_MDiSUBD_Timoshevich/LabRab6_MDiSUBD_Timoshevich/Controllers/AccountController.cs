@@ -35,10 +35,12 @@ namespace LabRab6_MDiSUBD_Timoshevich.Controllers
             if (client != null && client.Password == model.Password)
             {
                 ViewBag.WelcomeMessage = $"Hello, Client {client.FirstName} {client.LastName} ({client.Email})";
+                return RedirectToAction("Index", "Home");
             }
             else if (employee != null && employee.Password == model.Password)
             {
                 ViewBag.WelcomeMessage = $"Hello, Employee {employee.FirstName} {employee.LastName} ({employee.Email})";
+                return RedirectToAction("Index", "Home");
             }
             else
             {
