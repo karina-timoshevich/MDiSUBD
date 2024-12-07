@@ -173,3 +173,68 @@ CREATE TRIGGER trigger_log_job_deletion
 AFTER DELETE ON Job
 FOR EACH ROW
 EXECUTE FUNCTION log_job_deletion();
+
+CREATE OR REPLACE FUNCTION recalculate_cart_total_price_on_insert()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Cart
+    SET total_price = (
+        SELECT COALESCE(SUM(ci.quantity * p.price), 0)
+        FROM CartItem ci
+        JOIN Product p ON ci.product_id = p.id
+        WHERE ci.cart_id = NEW.cart_id
+    )
+    WHERE client_id = NEW.cart_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_recalculate_cart_total_price_after_insert
+AFTER INSERT ON CartItem
+FOR EACH ROW
+EXECUTE FUNCTION recalculate_cart_total_price_on_insert();
+
+
+CREATE OR REPLACE FUNCTION recalculate_cart_total_price_on_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Cart
+    SET total_price = (
+        SELECT COALESCE(SUM(ci.quantity * p.price), 0)
+        FROM CartItem ci
+        JOIN Product p ON ci.product_id = p.id
+        WHERE ci.cart_id = NEW.cart_id
+    )
+    WHERE client_id = NEW.cart_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_recalculate_cart_total_price_after_update
+AFTER UPDATE ON CartItem
+FOR EACH ROW
+EXECUTE FUNCTION recalculate_cart_total_price_on_update();
+
+
+CREATE OR REPLACE FUNCTION recalculate_cart_total_price_on_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Cart
+    SET total_price = (
+        SELECT COALESCE(SUM(ci.quantity * p.price), 0)
+        FROM CartItem ci
+        JOIN Product p ON ci.product_id = p.id
+        WHERE ci.cart_id = OLD.cart_id
+    )
+    WHERE client_id = OLD.cart_id;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_recalculate_cart_total_price_after_delete
+AFTER DELETE ON CartItem
+FOR EACH ROW
+EXECUTE FUNCTION recalculate_cart_total_price_on_delete();
