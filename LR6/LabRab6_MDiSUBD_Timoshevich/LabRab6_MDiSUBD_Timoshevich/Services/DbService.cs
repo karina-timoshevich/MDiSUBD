@@ -16,7 +16,6 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                                 ?? throw new ArgumentNullException("ConnectionString is not configured");
         }
 
-        // Метод для получения списка продуктов
         public async Task<List<Product>> GetAllProducts()
         {
             var products = new List<Product>();
@@ -27,7 +26,6 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 {
                     await conn.OpenAsync();
                     
-                    // Запрос для получения продуктов
                     await using (var cmd = new NpgsqlCommand("SELECT id, name, price FROM product", conn))
                     {
                         await using (var reader = await cmd.ExecuteReaderAsync())
@@ -54,5 +52,173 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
             return products;
         }
+        
+        public async Task<Client> GetClientByEmail(string email)
+        {
+            Client client = null;
+
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    var query = "SELECT id, first_name, last_name, phone_number, email, password FROM client WHERE email = @Email";
+                    await using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Email", email);
+
+                        await using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                client = new Client
+                                {
+                                    Id = (int)reader["id"],
+                                    FirstName = reader["first_name"].ToString(),
+                                    LastName = reader["last_name"].ToString(),
+                                    PhoneNumber = reader["phone_number"].ToString(),
+                                    Password = reader["password"].ToString(),
+                                    Email = reader["email"].ToString()
+
+                                };
+                                Console.WriteLine($"Client found: {client.FirstName} {client.LastName}");
+
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return client;
+        }
+        
+        public async Task<Employee> GetEmployeeByEmail(string email)
+        {
+            Employee employee = null;
+
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    // Запрос для получения сотрудника по email
+                    var query = "SELECT id, first_name, last_name, email, password FROM employee WHERE email = @Email";
+                    await using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Email", email);
+
+                        await using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                employee = new Employee
+                                {
+                                    Id = (int)reader["id"],
+                                    FirstName = reader["first_name"].ToString(),
+                                    LastName = reader["last_name"].ToString(),
+                                    Email = reader["email"].ToString(),
+                                    Password = reader["password"].ToString()
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return employee;
+        }
+
+        public async Task<Employee> GetEmployeeByEmailAndPassword(string email, string password)
+        {
+            Employee employee = null;
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    // Запрос для получения сотрудника по email и password
+                    await using (var cmd = new NpgsqlCommand("SELECT id, first_name, last_name, phone, email, password FROM Employee WHERE email = @email AND password = @password", conn))
+                    {
+                        cmd.Parameters.AddWithValue("email", email);
+                        cmd.Parameters.AddWithValue("password", password);
+
+                        await using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                employee = new Employee
+                                {
+                                    Id = (int)reader["id"],
+                                    FirstName = reader["first_name"].ToString(),
+                                    LastName = reader["last_name"].ToString(),
+                                    Phone = reader["phone"].ToString(),
+                                    Email = reader["email"].ToString(),
+                                    Password = reader["password"].ToString()
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return employee;
+        }
+        
+        public async Task<Client> GetClientByEmailAndPassword(string email, string password)
+        {
+            Client client = null;
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    // Запрос для получения клиента по email и password
+                    await using (var cmd = new NpgsqlCommand("SELECT id, first_name, last_name, phone_number, email, password FROM Client WHERE email = @email AND password = @password", conn))
+                    {
+                        cmd.Parameters.AddWithValue("email", email);
+                        cmd.Parameters.AddWithValue("password", password);
+
+                        await using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                client = new Client
+                                {
+                                    Id = (int)reader["id"],
+                                    FirstName = reader["first_name"].ToString(),
+                                    LastName = reader["last_name"].ToString(),
+                                    PhoneNumber = reader["phone_number"].ToString(),
+                                    Email = reader["email"].ToString(),
+                                    Password = reader["password"].ToString()
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return client;
+        }
+
     }
 }
