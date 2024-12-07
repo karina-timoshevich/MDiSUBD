@@ -12,7 +12,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
         public DbService(IConfiguration configuration)
         {
-            _connectionString = configuration.GetValue<string>("ConnectionString") 
+            _connectionString = configuration.GetValue<string>("ConnectionString")
                                 ?? throw new ArgumentNullException("ConnectionString is not configured");
         }
 
@@ -25,7 +25,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 await using (var conn = new NpgsqlConnection(_connectionString))
                 {
                     await conn.OpenAsync();
-                    
+
                     await using (var cmd = new NpgsqlCommand("SELECT id, name, price FROM product", conn))
                     {
                         await using (var reader = await cmd.ExecuteReaderAsync())
@@ -52,7 +52,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
             return products;
         }
-        
+
         public async Task<Client> GetClientByEmail(string email)
         {
             Client client = null;
@@ -63,7 +63,8 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 {
                     await conn.OpenAsync();
 
-                    var query = "SELECT id, first_name, last_name, phone_number, email, password FROM client WHERE email = @Email";
+                    var query =
+                        "SELECT id, first_name, last_name, phone_number, email, password FROM client WHERE email = @Email";
                     await using (var cmd = new NpgsqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Email", email);
@@ -96,7 +97,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
             return client;
         }
-        
+
         public async Task<Employee> GetEmployeeByEmail(string email)
         {
             Employee employee = null;
@@ -148,7 +149,9 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                     await conn.OpenAsync();
 
                     // Запрос для получения сотрудника по email и password
-                    await using (var cmd = new NpgsqlCommand("SELECT id, first_name, last_name, phone, email, password FROM Employee WHERE email = @email AND password = @password", conn))
+                    await using (var cmd = new NpgsqlCommand(
+                                     "SELECT id, first_name, last_name, phone, email, password FROM Employee WHERE email = @email AND password = @password",
+                                     conn))
                     {
                         cmd.Parameters.AddWithValue("email", email);
                         cmd.Parameters.AddWithValue("password", password);
@@ -178,7 +181,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
             return employee;
         }
-        
+
         public async Task<Client> GetClientByEmailAndPassword(string email, string password)
         {
             Client client = null;
@@ -189,7 +192,9 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                     await conn.OpenAsync();
 
                     // Запрос для получения клиента по email и password
-                    await using (var cmd = new NpgsqlCommand("SELECT id, first_name, last_name, phone_number, email, password FROM Client WHERE email = @email AND password = @password", conn))
+                    await using (var cmd = new NpgsqlCommand(
+                                     "SELECT id, first_name, last_name, phone_number, email, password FROM Client WHERE email = @email AND password = @password",
+                                     conn))
                     {
                         cmd.Parameters.AddWithValue("email", email);
                         cmd.Parameters.AddWithValue("password", password);
@@ -220,5 +225,39 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
             return client;
         }
 
+        public async Task AddClient(Client client)
+        {
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    var query = "CALL public.add_client(@FirstName, @LastName, @DateOfBirth, @PhoneNumber, @Password, @Email)";
+                    await using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        Console.WriteLine($"FirstName: {client.FirstName}");
+                        Console.WriteLine($"LastName: {client.LastName}");
+                        Console.WriteLine($"DateOfBirth: {client.DateOfBirth}");
+                        Console.WriteLine($"PhoneNumber: {client.PhoneNumber}");
+                        Console.WriteLine($"Password: {client.Password}");
+                        Console.WriteLine($"Email: {client.Email}");
+                        
+                        cmd.Parameters.AddWithValue("@FirstName", client.FirstName);
+                        cmd.Parameters.AddWithValue("@LastName", client.LastName);
+                        cmd.Parameters.AddWithValue("@DateOfBirth", client.DateOfBirth.HasValue ? client.DateOfBirth.Value.Date : (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@PhoneNumber", client.PhoneNumber);
+                        cmd.Parameters.AddWithValue("@Password", client.Password);
+                        cmd.Parameters.AddWithValue("@Email", client.Email ?? (object)DBNull.Value);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
     }
 }

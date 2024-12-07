@@ -105,15 +105,17 @@ CREATE OR REPLACE PROCEDURE add_client(
     p_last_name VARCHAR,
     p_date_of_birth DATE,
     p_phone_number VARCHAR(20),
-    p_password VARCHAR(100)
+    p_password VARCHAR(100),
+    p_email VARCHAR(100)  
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    INSERT INTO Client (first_name, last_name, date_of_birth, phone_number, password)
-    VALUES (p_first_name, p_last_name, p_date_of_birth, p_phone_number, p_password);
+    INSERT INTO Client (first_name, last_name, date_of_birth, phone_number, password, email)
+    VALUES (p_first_name, p_last_name, p_date_of_birth, p_phone_number, p_password, p_email);  -- добавляем email
 END;
 $$;
+
 
 CREATE OR REPLACE PROCEDURE add_pickup_location(
     p_name VARCHAR,
