@@ -48,7 +48,7 @@ public class CartController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        await _dbService.RemoveFromCart(clientId.Value, productId);
+        await _dbService.RemoveFromCart( productId, clientId.Value);
         return RedirectToAction("Index");
     }
 

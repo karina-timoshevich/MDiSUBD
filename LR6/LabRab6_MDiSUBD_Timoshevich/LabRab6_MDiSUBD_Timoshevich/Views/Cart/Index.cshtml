@@ -1,4 +1,27 @@
-﻿@model List<LabRab6_MDiSUBD_Timoshevich.Entities.CartItem>
+﻿@using System.Globalization
+@model List<LabRab6_MDiSUBD_Timoshevich.Entities.CartItem>
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    table, th, td {
+        border: 1px solid #ddd;
+    }
+    th, td {
+        padding: 10px;
+        text-align: center;
+    }
+    th {
+        background-color: #f4f4f4;
+    }
+    .total {
+        font-weight: bold;
+        font-size: 1.2em;
+        margin-top: 20px;
+    }
+</style>
 
 <h2>Your Cart</h2>
 @if (Model != null && Model.Count > 0)
@@ -18,11 +41,19 @@
         {
             <tr>
                 <td>@item.ProductName</td>
-                <td>@item.Price.ToString("C")</td>
-                <td>@item.Quantity</td>
-                <td>@(item.Quantity * item.Price).ToString("C")</td>
+                <td>@item.Price</td>
                 <td>
-                    <form method="post" asp-action="RemoveFromCart" asp-route-id="@item.Id">
+                    <form method="post" asp-action="UpdateCart" asp-route-productId="@item.ProductId" asp-route-quantity="@(item.Quantity - 1)">
+                        <button type="submit" @(item.Quantity == 1 ? "disabled" : "")>-</button>
+                    </form>
+                    @item.Quantity
+                    <form method="post" asp-action="UpdateCart" asp-route-productId="@item.ProductId" asp-route-quantity="@(item.Quantity + 1)">
+                        <button type="submit">+</button>
+                    </form>
+                </td>
+                <td>@(item.Quantity * item.Price)</td>
+                <td>
+                    <form method="post" asp-action="RemoveFromCart" asp-route-productId="@item.ProductId">
                         <button type="submit">Remove</button>
                     </form>
                 </td>
@@ -30,7 +61,8 @@
         }
         </tbody>
     </table>
-    <p>Total: @Model.Sum(i => i.Quantity * i.Price).ToString("C")</p>
+
+    <p class="total">Total: @Model.Sum(i => i.Quantity * i.Price))</p>
     <a href="@Url.Action("Checkout", "Order")">Proceed to Checkout</a>
 }
 else
