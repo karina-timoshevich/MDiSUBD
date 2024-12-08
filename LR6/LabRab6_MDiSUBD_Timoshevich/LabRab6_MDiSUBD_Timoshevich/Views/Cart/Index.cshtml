@@ -62,14 +62,13 @@
         }
         </tbody>
     </table>
-    <form method="post" asp-action="UpdateCart">
-        <div class="form-group">
-            <label for="promoCodeId">Enter Promo Code (optional):</label>
-            <input type="text" id="promoCodeId" name="promoCodeId" class="form-control" />
-        </div>
-
-        <button type="submit" class="btn btn-primary">Apply Promo Code</button>
+  
+    <form method="post" asp-action="ApplyPromoCode">
+        <select name="promoCodeId" asp-items="@ViewBag.PromoCodes"></select>
+        <button type="submit">Apply Promo Code</button>
     </form>
+
+    <p>Total Price: @ViewBag.TotalPrice</p>
 
     <p class="total">Total: @Model.Sum(i => i.Quantity * i.Price)</p>
 
@@ -78,10 +77,11 @@
             <label for="pickupLocationId">Select Pickup Location:</label>
             @Html.DropDownList("pickupLocationId", (SelectList)ViewBag.PickupLocations, "Choose a location", new { @class = "form-control" })
         </div>
-
-
+        
         <button type="submit" class="btn btn-primary">Place Order</button>
     </form>
+    <p>Total Price: @ViewBag.TotalPrice</p>
+
 }
 else
 {

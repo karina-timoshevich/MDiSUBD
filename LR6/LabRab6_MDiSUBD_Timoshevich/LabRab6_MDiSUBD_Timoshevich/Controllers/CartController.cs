@@ -54,9 +54,9 @@ public class CartController : Controller
         if (promoCodeId.HasValue)
         {
             var discount = await _dbService.GetPromoCodeDiscount(promoCodeId.Value);
+            Console.WriteLine($"Promo Code ID: {promoCodeId.Value}, Discount: {discount}%");
             totalPrice -= totalPrice * (discount / 100);  // Скидка как процент
-            Console.WriteLine($"discount: {discount}");
-            Console.WriteLine($"totalPrice: {totalPrice}");
+            Console.WriteLine($"Total price after discount: {totalPrice}");
         }
 
         // Обновляем цену в корзине
@@ -65,6 +65,33 @@ public class CartController : Controller
         TempData["SuccessMessage"] = "Your cart has been updated.";
         return RedirectToAction("Index");
     }
+    [HttpPost]
+    public async Task<IActionResult> ApplyPromoCode(int? promoCodeId)
+    {
+        var clientId = HttpContext.Session.GetInt32("ClientId");
+        if (clientId == null)
+        {
+            TempData["ErrorMessage"] = "You need to be logged in to apply a promo code.";
+            return RedirectToAction("Login", "Account");
+        }
+
+        var cartItems = await _dbService.GetCartItemsByClientId(clientId.Value);
+        decimal totalPrice = cartItems.Sum(item => item.Quantity * item.Price);
+
+        if (promoCodeId.HasValue)
+        {
+            var discount = await _dbService.GetPromoCodeDiscount(promoCodeId.Value);
+            totalPrice -= totalPrice * (discount / 100); // Apply discount
+        }
+
+        // Обновление цены в базе данных
+        await _dbService.UpdateCartTotalPrice(clientId.Value, totalPrice);
+
+        ViewBag.TotalPrice = totalPrice;  // Передаем обновленную цену в View
+        TempData["SuccessMessage"] = "Promo code applied successfully!";
+        return RedirectToAction("Index");
+    }
+
 
 
     [HttpPost]
@@ -92,8 +119,13 @@ public class CartController : Controller
         }
 
         var totalPrice = await _dbService.GetCartTotalPrice(clientId.Value);
+        if (promoCodeId.HasValue)
+        {
+            // Получаем скидку по промокоду
+            var discount = await _dbService.GetPromoCodeDiscount(promoCodeId.Value);
+            totalPrice -= totalPrice * (discount / 100);  // Скидка как процент
+        }
 
-        // Теперь передаем все 4 аргумента
         await _dbService.CreateOrder(clientId.Value, pickupLocationId, promoCodeId, totalPrice);
 
         TempData["SuccessMessage"] = "Your order has been placed successfully.";
