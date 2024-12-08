@@ -63,7 +63,20 @@
     </table>
 
     <p class="total">Total: @Model.Sum(i => i.Quantity * i.Price))</p>
-    <a href="@Url.Action("Checkout", "Order")">Proceed to Checkout</a>
+    <form method="post" asp-action="CreateOrder">
+        <div class="form-group">
+            <label for="pickupLocationId">Select Pickup Location:</label>
+            @Html.DropDownList("pickupLocationId", (SelectList)ViewBag.PickupLocations, "Choose a location", new { @class = "form-control" })
+        </div>
+
+
+        <div class="form-group">
+            <label for="promoCodeId">Enter Promo Code (optional):</label>
+            <input type="text" id="promoCodeId" name="promoCodeId" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Place Order</button>
+    </form>
 }
 else
 {

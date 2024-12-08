@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using LabRab6_MDiSUBD_Timoshevich.Services;
 using LabRab6_MDiSUBD_Timoshevich.Entities;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 public class CartController : Controller
 {
@@ -21,6 +22,11 @@ public class CartController : Controller
         }
 
         var cartItems = await _dbService.GetCartItemsByClientId(clientId.Value);
+        var pickupLocations = await _dbService.GetAllPickupLocations();
+        var promoCodes = await _dbService.GetAllPromoCodes();
+        ViewBag.PickupLocations = new SelectList(pickupLocations, "Id", "Name");
+        ViewBag.PromoCodes = new SelectList(promoCodes, "Id", "Code"); 
+
         return View(cartItems);
     }
 
@@ -53,24 +59,18 @@ public class CartController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Checkout()
+    public async Task<IActionResult> CreateOrder(int pickupLocationId, int? promoCodeId)
     {
         var clientId = HttpContext.Session.GetInt32("ClientId");
         if (clientId == null)
         {
-            TempData["ErrorMessage"] = "You need to be logged in to proceed with checkout.";
+            TempData["ErrorMessage"] = "You need to be logged in to place an order.";
             return RedirectToAction("Login", "Account");
         }
 
-        /*var success = await _dbService.PlaceOrder(clientId.Value);
-        if (success)
-        {
-            TempData["SuccessMessage"] = "Your order has been placed.";
-        }
-        else
-        {
-            TempData["ErrorMessage"] = "Failed to place your order. Please try again.";
-        }*/
-        return RedirectToAction("Index");
+        await _dbService.CreateOrder(clientId.Value, pickupLocationId, promoCodeId);
+
+        TempData["SuccessMessage"] = "Your order has been placed successfully.";
+        return RedirectToAction("Index", "Cart");
     }
 }

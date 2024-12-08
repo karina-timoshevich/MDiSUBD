@@ -34,19 +34,14 @@ namespace LabRab6_MDiSUBD_Timoshevich.Controllers
 
             if (client != null && client.Password == model.Password)
             {
-                // Сохраняем ClientId в сессии
                 HttpContext.Session.SetInt32("ClientId", client.Id);
-
-                // Выводим приветственное сообщение
                 ViewBag.WelcomeMessage = $"Hello, Client {client.FirstName} {client.LastName} ({client.Email})";
                 return RedirectToAction("Index", "Home");
             }
             else if (employee != null && employee.Password == model.Password)
             {
-                // Сохраняем EmployeeId в сессии
                 HttpContext.Session.SetInt32("EmployeeId", employee.Id);
-
-                // Выводим приветственное сообщение
+                await _dbService.SetEmployeeIdInSession(employee.Id);
                 ViewBag.WelcomeMessage = $"Hello, Employee {employee.FirstName} {employee.LastName} ({employee.Email})";
                 return RedirectToAction("Index", "Home");
             }

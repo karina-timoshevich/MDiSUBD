@@ -585,7 +585,80 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
             return product;
         }
-public async Task AddProductToCart(int clientId, int productId, int quantity)
+        public async Task AddProductToCart(int clientId, int productId, int quantity)
+        {
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    var checkCartQuery = "SELECT COUNT(*) FROM Cart WHERE client_id = @ClientId";
+                    await using (var checkCartCmd = new NpgsqlCommand(checkCartQuery, conn))
+                    {
+                        checkCartCmd.Parameters.AddWithValue("@ClientId", clientId);
+
+                        var cartCount = (long)await checkCartCmd.ExecuteScalarAsync();
+                        
+                        if (cartCount == 0)
+                        {
+                            var createCartQuery = "INSERT INTO Cart (client_id, total_price) VALUES (@ClientId, 0)";
+                            await using (var createCartCmd = new NpgsqlCommand(createCartQuery, conn))
+                            {
+                                createCartCmd.Parameters.AddWithValue("@ClientId", clientId);
+                                await createCartCmd.ExecuteNonQueryAsync();
+                            }
+                        }
+                    }
+
+                    var getCartIdQuery = "SELECT client_id FROM Cart WHERE client_id = @ClientId";
+                    int cartId;
+                    await using (var getCartIdCmd = new NpgsqlCommand(getCartIdQuery, conn))
+                    {
+                        getCartIdCmd.Parameters.AddWithValue("@ClientId", clientId);
+                        cartId = (int)await getCartIdCmd.ExecuteScalarAsync();
+                    }
+
+                    var checkQuery = "SELECT COUNT(*) FROM CartItem WHERE cart_id = @CartId AND product_id = @ProductId";
+                    await using (var checkCmd = new NpgsqlCommand(checkQuery, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@CartId", cartId);
+                        checkCmd.Parameters.AddWithValue("@ProductId", productId);
+
+                        var count = (long)await checkCmd.ExecuteScalarAsync();
+                        if (count > 0)
+                        {
+                            var updateQuery = "UPDATE CartItem SET quantity = quantity + @Quantity WHERE cart_id = @CartId AND product_id = @ProductId";
+                            await using (var updateCmd = new NpgsqlCommand(updateQuery, conn))
+                            {
+                                updateCmd.Parameters.AddWithValue("@CartId", cartId);
+                                updateCmd.Parameters.AddWithValue("@ProductId", productId);
+                                updateCmd.Parameters.AddWithValue("@Quantity", quantity);
+
+                                await updateCmd.ExecuteNonQueryAsync();
+                            }
+                        }
+                        else
+                        {
+                            var insertQuery = "INSERT INTO CartItem (cart_id, product_id, quantity) VALUES (@CartId, @ProductId, @Quantity)";
+                            await using (var insertCmd = new NpgsqlCommand(insertQuery, conn))
+                            {
+                                insertCmd.Parameters.AddWithValue("@CartId", cartId);
+                                insertCmd.Parameters.AddWithValue("@ProductId", productId);
+                                insertCmd.Parameters.AddWithValue("@Quantity", quantity);
+
+                                await insertCmd.ExecuteNonQueryAsync();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCodeId = null)
 {
     try
     {
@@ -593,62 +666,118 @@ public async Task AddProductToCart(int clientId, int productId, int quantity)
         {
             await conn.OpenAsync();
 
-            var checkCartQuery = "SELECT COUNT(*) FROM Cart WHERE client_id = @ClientId";
-            await using (var checkCartCmd = new NpgsqlCommand(checkCartQuery, conn))
+            await using (var transaction = await conn.BeginTransactionAsync())
             {
-                checkCartCmd.Parameters.AddWithValue("@ClientId", clientId);
-
-                var cartCount = (long)await checkCartCmd.ExecuteScalarAsync();
-                
-                if (cartCount == 0)
+                try
                 {
-                    var createCartQuery = "INSERT INTO Cart (client_id, total_price) VALUES (@ClientId, 0)";
-                    await using (var createCartCmd = new NpgsqlCommand(createCartQuery, conn))
+                    // Проверяем, существует ли корзина
+                    var checkCartQuery = "SELECT COUNT(*) FROM Cart WHERE client_id = @ClientId";
+                    await using (var checkCartCmd = new NpgsqlCommand(checkCartQuery, conn, transaction))
                     {
-                        createCartCmd.Parameters.AddWithValue("@ClientId", clientId);
-                        await createCartCmd.ExecuteNonQueryAsync();
+                        checkCartCmd.Parameters.AddWithValue("@ClientId", clientId);
+
+                        var cartCount = (long)await checkCartCmd.ExecuteScalarAsync();
+                        if (cartCount == 0)
+                        {
+                            throw new Exception("Корзина пуста");
+                        }
                     }
+
+                    // Получаем данные о корзине
+                    var getCartQuery = "SELECT client_id, total_price FROM Cart WHERE client_id = @ClientId";
+                    int cartId;
+                    decimal totalPrice;
+                    await using (var getCartCmd = new NpgsqlCommand(getCartQuery, conn, transaction))
+                    {
+                        getCartCmd.Parameters.AddWithValue("@ClientId", clientId);
+                        await using (var reader = await getCartCmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                cartId = reader.GetInt32(0);
+                                totalPrice = reader.GetDecimal(1);
+                            }
+                            else
+                            {
+                                throw new Exception("Ошибка при получении корзины");
+                            }
+                        }
+                    }
+
+                    // Создаём заказ
+                    var createOrderQuery = @"
+                        INSERT INTO Orders (client_id, order_date, total_price, promo_code_id, pickup_location_id, status) 
+                        VALUES (@ClientId, @OrderDate, @TotalPrice, @PromoCodeId, @PickupLocationId, 'Pending') 
+                        RETURNING id";
+                    int orderId;
+                    await using (var createOrderCmd = new NpgsqlCommand(createOrderQuery, conn, transaction))
+                    {
+                        createOrderCmd.Parameters.AddWithValue("@ClientId", clientId);
+                        createOrderCmd.Parameters.AddWithValue("@OrderDate", DateTime.UtcNow);
+                        createOrderCmd.Parameters.AddWithValue("@TotalPrice", totalPrice);
+                        createOrderCmd.Parameters.AddWithValue("@PromoCodeId", promoCodeId.HasValue ? (object)promoCodeId.Value : DBNull.Value);
+                        createOrderCmd.Parameters.AddWithValue("@PickupLocationId", pickupLocationId);
+
+                        orderId = (int)await createOrderCmd.ExecuteScalarAsync();
+                    }
+
+                    // Сохраняем CartItem в память
+                    var cartItems = new List<(int ProductId, int Quantity)>();
+                    var getCartItemsQuery = "SELECT product_id, quantity FROM CartItem WHERE cart_id = @CartId";
+                    await using (var getCartItemsCmd = new NpgsqlCommand(getCartItemsQuery, conn, transaction))
+                    {
+                        getCartItemsCmd.Parameters.AddWithValue("@CartId", cartId);
+
+                        await using (var reader = await getCartItemsCmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                cartItems.Add((reader.GetInt32(0), reader.GetInt32(1)));
+                            }
+                        }
+                    }
+
+                    // Переносим CartItem в OrderItem
+                    foreach (var (productId, quantity) in cartItems)
+                    {
+                        var insertOrderItemQuery = @"
+                            INSERT INTO OrderItem (order_id, product_id, quantity) 
+                            VALUES (@OrderId, @ProductId, @Quantity)";
+                        await using (var insertOrderItemCmd = new NpgsqlCommand(insertOrderItemQuery, conn, transaction))
+                        {
+                            insertOrderItemCmd.Parameters.AddWithValue("@OrderId", orderId);
+                            insertOrderItemCmd.Parameters.AddWithValue("@ProductId", productId);
+                            insertOrderItemCmd.Parameters.AddWithValue("@Quantity", quantity);
+
+                            await insertOrderItemCmd.ExecuteNonQueryAsync();
+                        }
+                    }
+
+                    // Очищаем корзину клиента
+                    var deleteCartItemsQuery = "DELETE FROM CartItem WHERE cart_id = @CartId";
+                    await using (var deleteCartItemsCmd = new NpgsqlCommand(deleteCartItemsQuery, conn, transaction))
+                    {
+                        deleteCartItemsCmd.Parameters.AddWithValue("@CartId", cartId);
+                        await deleteCartItemsCmd.ExecuteNonQueryAsync();
+                    }
+
+                    var deleteCartQuery = "DELETE FROM Cart WHERE client_id = @ClientId";
+                    await using (var deleteCartCmd = new NpgsqlCommand(deleteCartQuery, conn, transaction))
+                    {
+                        deleteCartCmd.Parameters.AddWithValue("@ClientId", clientId);
+                        await deleteCartCmd.ExecuteNonQueryAsync();
+                    }
+
+                    // Подтверждаем транзакцию
+                    await transaction.CommitAsync();
+
+                    Console.WriteLine($"Заказ успешно оформлен. ID заказа: {orderId}");
                 }
-            }
-
-            var getCartIdQuery = "SELECT client_id FROM Cart WHERE client_id = @ClientId";
-            int cartId;
-            await using (var getCartIdCmd = new NpgsqlCommand(getCartIdQuery, conn))
-            {
-                getCartIdCmd.Parameters.AddWithValue("@ClientId", clientId);
-                cartId = (int)await getCartIdCmd.ExecuteScalarAsync();
-            }
-
-            var checkQuery = "SELECT COUNT(*) FROM CartItem WHERE cart_id = @CartId AND product_id = @ProductId";
-            await using (var checkCmd = new NpgsqlCommand(checkQuery, conn))
-            {
-                checkCmd.Parameters.AddWithValue("@CartId", cartId);
-                checkCmd.Parameters.AddWithValue("@ProductId", productId);
-
-                var count = (long)await checkCmd.ExecuteScalarAsync();
-                if (count > 0)
+                catch (Exception)
                 {
-                    var updateQuery = "UPDATE CartItem SET quantity = quantity + @Quantity WHERE cart_id = @CartId AND product_id = @ProductId";
-                    await using (var updateCmd = new NpgsqlCommand(updateQuery, conn))
-                    {
-                        updateCmd.Parameters.AddWithValue("@CartId", cartId);
-                        updateCmd.Parameters.AddWithValue("@ProductId", productId);
-                        updateCmd.Parameters.AddWithValue("@Quantity", quantity);
-
-                        await updateCmd.ExecuteNonQueryAsync();
-                    }
-                }
-                else
-                {
-                    var insertQuery = "INSERT INTO CartItem (cart_id, product_id, quantity) VALUES (@CartId, @ProductId, @Quantity)";
-                    await using (var insertCmd = new NpgsqlCommand(insertQuery, conn))
-                    {
-                        insertCmd.Parameters.AddWithValue("@CartId", cartId);
-                        insertCmd.Parameters.AddWithValue("@ProductId", productId);
-                        insertCmd.Parameters.AddWithValue("@Quantity", quantity);
-
-                        await insertCmd.ExecuteNonQueryAsync();
-                    }
+                    // Откатываем транзакцию при ошибке
+                    await transaction.RollbackAsync();
+                    throw;
                 }
             }
         }
@@ -658,6 +787,65 @@ public async Task AddProductToCart(int clientId, int productId, int quantity)
         Console.WriteLine($"Error: {ex.Message}");
     }
 }
+
+
+        public async Task<List<PromoCode>> GetAllPromoCodes()
+        {
+            var promoCodes = new List<PromoCode>();
+
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    var query = "SELECT Id, Code, Discount FROM PromoCode";
+                    await using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        await using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                promoCodes.Add(new PromoCode
+                                {
+                                    Id = reader.GetInt32(0),
+                                    Code = reader.GetString(1),
+                                    Discount = reader.GetDecimal(2)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return promoCodes;
+        }
+        public async Task SetEmployeeIdInSession(int employeeId)
+        {
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    // Устанавливаем параметр сессии для текущего сотрудника
+                    var setEmployeeIdQuery = "SET app.employee_id TO @EmployeeId";
+                    await using (var setEmployeeIdCmd = new NpgsqlCommand(setEmployeeIdQuery, conn))
+                    {
+                        setEmployeeIdCmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                        await setEmployeeIdCmd.ExecuteNonQueryAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error setting employee ID: {ex.Message}");
+            }
+        }
 
     }
 }
