@@ -68,7 +68,8 @@ CREATE TABLE IF NOT EXISTS PickupLocation (
 
 CREATE TABLE IF NOT EXISTS Cart (
     client_id INT PRIMARY KEY REFERENCES Client(id),
-    total_price DECIMAL(10, 2) NOT NULL
+    total_price DECIMAL(10, 2) NOT NULL,
+    discount DECIMAL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS CartItem (

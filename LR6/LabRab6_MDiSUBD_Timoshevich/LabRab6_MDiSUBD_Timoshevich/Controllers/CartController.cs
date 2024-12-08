@@ -31,7 +31,7 @@ public class CartController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> UpdateCart(int productId, int quantity)
+    public async Task<IActionResult> UpdateCart(int productId, int quantity, int? promoCodeId)
     {
         var clientId = HttpContext.Session.GetInt32("ClientId");
         if (clientId == null)
@@ -39,10 +39,33 @@ public class CartController : Controller
             TempData["ErrorMessage"] = "You need to be logged in to update your cart.";
             return RedirectToAction("Login", "Account");
         }
+        Console.WriteLine($"ProductId(UpdateCart): {productId}, Quantity(UpdateCart): {quantity}, ClientId(UpdateCart): {clientId}");
 
-        await _dbService.UpdateCart(clientId.Value, productId, quantity);
+        var updated = await _dbService.UpdateCartItemQuantity(clientId.Value, productId, quantity);
+        if (!updated)
+        {
+            TempData["ErrorMessage"] = "Unable to update the item quantity.";
+            return RedirectToAction("Index");
+        }
+        var cartItems = await _dbService.GetCartItemsByClientId(clientId.Value);
+        decimal totalPrice = cartItems.Sum(item => item.Quantity * item.Price);
+
+        // Применяем промокод, если он есть
+        if (promoCodeId.HasValue)
+        {
+            var discount = await _dbService.GetPromoCodeDiscount(promoCodeId.Value);
+            totalPrice -= totalPrice * (discount / 100);  // Скидка как процент
+            Console.WriteLine($"discount: {discount}");
+            Console.WriteLine($"totalPrice: {totalPrice}");
+        }
+
+        // Обновляем цену в корзине
+        await _dbService.UpdateCartTotalPrice(clientId.Value, totalPrice);
+
+        TempData["SuccessMessage"] = "Your cart has been updated.";
         return RedirectToAction("Index");
     }
+
 
     [HttpPost]
     public async Task<IActionResult> RemoveFromCart(int productId)
@@ -68,9 +91,14 @@ public class CartController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        await _dbService.CreateOrder(clientId.Value, pickupLocationId, promoCodeId);
+        var totalPrice = await _dbService.GetCartTotalPrice(clientId.Value);
+
+        // Теперь передаем все 4 аргумента
+        await _dbService.CreateOrder(clientId.Value, pickupLocationId, promoCodeId, totalPrice);
 
         TempData["SuccessMessage"] = "Your order has been placed successfully.";
         return RedirectToAction("Index", "Cart");
     }
+
+
 }

@@ -657,8 +657,8 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 Console.WriteLine($"Error: {ex.Message}");
             }
         }
-public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCodeId = null)
-{
+        public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCodeId, decimal totalPrice)
+        {
     try
     {
         await using (var conn = new NpgsqlConnection(_connectionString))
@@ -669,7 +669,6 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
             {
                 try
                 {
-                    // Проверяем, существует ли корзина
                     var checkCartQuery = "SELECT COUNT(*) FROM Cart WHERE client_id = @ClientId";
                     await using (var checkCartCmd = new NpgsqlCommand(checkCartQuery, conn, transaction))
                     {
@@ -682,10 +681,8 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
                         }
                     }
 
-                    // Получаем данные о корзине
                     var getCartQuery = "SELECT client_id, total_price FROM Cart WHERE client_id = @ClientId";
                     int cartId;
-                    decimal totalPrice;
                     await using (var getCartCmd = new NpgsqlCommand(getCartQuery, conn, transaction))
                     {
                         getCartCmd.Parameters.AddWithValue("@ClientId", clientId);
@@ -693,8 +690,8 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
                         {
                             if (await reader.ReadAsync())
                             {
-                                cartId = reader.GetInt32(0);
-                                totalPrice = reader.GetDecimal(1);
+                                cartId = reader.GetInt32(0); // Получаем cartId
+                                totalPrice = reader.GetDecimal(1); // Получаем totalPrice
                             }
                             else
                             {
@@ -703,7 +700,6 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
                         }
                     }
 
-                    // Создаём заказ
                     var createOrderQuery = @"
                         INSERT INTO Orders (client_id, order_date, total_price, promo_code_id, pickup_location_id, status) 
                         VALUES (@ClientId, @OrderDate, @TotalPrice, @PromoCodeId, @PickupLocationId, 'Pending') 
@@ -720,7 +716,7 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
                         orderId = (int)await createOrderCmd.ExecuteScalarAsync();
                     }
 
-                    // Сохраняем CartItem в память
+                    
                     var cartItems = new List<(int ProductId, int Quantity)>();
                     var getCartItemsQuery = "SELECT product_id, quantity FROM CartItem WHERE cart_id = @CartId";
                     await using (var getCartItemsCmd = new NpgsqlCommand(getCartItemsQuery, conn, transaction))
@@ -736,7 +732,6 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
                         }
                     }
 
-                    // Переносим CartItem в OrderItem
                     foreach (var (productId, quantity) in cartItems)
                     {
                         var insertOrderItemQuery = @"
@@ -751,8 +746,7 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
                             await insertOrderItemCmd.ExecuteNonQueryAsync();
                         }
                     }
-
-                    // Очищаем корзину клиента
+                    
                     var deleteCartItemsQuery = "DELETE FROM CartItem WHERE cart_id = @CartId";
                     await using (var deleteCartItemsCmd = new NpgsqlCommand(deleteCartItemsQuery, conn, transaction))
                     {
@@ -767,14 +761,12 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
                         await deleteCartCmd.ExecuteNonQueryAsync();
                     }
 
-                    // Подтверждаем транзакцию
                     await transaction.CommitAsync();
 
                     Console.WriteLine($"Заказ успешно оформлен. ID заказа: {orderId}");
                 }
                 catch (Exception)
                 {
-                    // Откатываем транзакцию при ошибке
                     await transaction.RollbackAsync();
                     throw;
                 }
@@ -890,6 +882,101 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
             }
 
             return orders;
+        }
+
+        public async Task<decimal> GetCartTotalPrice(int clientId)
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = "SELECT total_price FROM Cart WHERE client_id = @ClientId";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@ClientId", clientId);
+                    return (decimal)await cmd.ExecuteScalarAsync();
+                }
+            }
+        }
+
+        public async Task UpdateCartTotalPrice(int clientId, decimal totalPrice)
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = "UPDATE Cart SET total_price = @TotalPrice WHERE client_id = @ClientId";
+        
+                // Логируем выполнение запроса
+                Console.WriteLine($"Executing query: {query}, Parameters: ClientId = {clientId}, TotalPrice = {totalPrice}");
+        
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@TotalPrice", totalPrice);
+                    cmd.Parameters.AddWithValue("@ClientId", clientId);
+            
+                    var rowsAffected = await cmd.ExecuteNonQueryAsync();
+            
+                    Console.WriteLine($"Rows affected: {rowsAffected}");
+            
+                    if (rowsAffected == 0)
+                    {
+                        Console.WriteLine("No rows updated.");
+                    }
+                }
+            }
+        }
+
+
+        public async Task<decimal> GetPromoCodeDiscount(int promoCodeId)
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = "SELECT discount FROM PromoCode WHERE id = @PromoCodeId";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@PromoCodeId", promoCodeId);
+                    return (decimal)await cmd.ExecuteScalarAsync();
+                }
+            }
+        }
+
+        public async Task<bool> UpdateCartItemQuantity(int clientId, int productId, int quantity)
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                Console.WriteLine($"Connection opened for ClientId: {clientId}, ProductId: {productId}, Quantity: {quantity}");
+
+                // Если количество меньше 1, удаляем товар из корзины
+                if (quantity < 1)
+                {
+                    var deleteQuery = "DELETE FROM CartItem WHERE cart_id = (SELECT id FROM Cart WHERE client_id = @ClientId) AND product_id = @ProductId";
+                    await using (var deleteCmd = new NpgsqlCommand(deleteQuery, conn))
+                    {
+                        deleteCmd.Parameters.AddWithValue("@ClientId", clientId);
+                        deleteCmd.Parameters.AddWithValue("@ProductId", productId);
+                        var rowsDeleted = await deleteCmd.ExecuteNonQueryAsync();
+                        Console.WriteLine($"Rows deleted: {rowsDeleted}");
+                        return rowsDeleted > 0;
+                    }
+                }
+
+                // Обновляем количество товара
+                var updateQuery = "UPDATE CartItem SET quantity = @Quantity WHERE cart_id = @ClientId AND product_id = @ProductId";
+                Console.WriteLine($"Executing update query: {updateQuery}");
+                await using (var cmd = new NpgsqlCommand(updateQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Quantity", quantity);
+                    cmd.Parameters.AddWithValue("@ClientId", clientId);
+                    cmd.Parameters.AddWithValue("@ProductId", productId);
+
+                    Console.WriteLine($"Parameters: Quantity = {quantity}, ClientId = {clientId}, ProductId = {productId}");
+
+                    var rowsAffected = await cmd.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Rows affected: {rowsAffected}");
+                    return rowsAffected > 0;
+                }
+            }
         }
 
     }
