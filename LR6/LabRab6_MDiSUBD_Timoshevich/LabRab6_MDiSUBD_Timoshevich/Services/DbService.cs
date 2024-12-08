@@ -123,7 +123,6 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 {
                     await conn.OpenAsync();
 
-                    // Запрос для получения сотрудника по email
                     var query = "SELECT id, first_name, last_name, email, password FROM employee WHERE email = @Email";
                     await using (var cmd = new NpgsqlCommand(query, conn))
                     {
@@ -832,7 +831,6 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
                 {
                     await conn.OpenAsync();
 
-                    // Устанавливаем параметр сессии для текущего сотрудника
                     var setEmployeeIdQuery = "SET app.employee_id TO @EmployeeId";
                     await using (var setEmployeeIdCmd = new NpgsqlCommand(setEmployeeIdQuery, conn))
                     {
@@ -845,6 +843,53 @@ public async Task CreateOrder(int clientId, int pickupLocationId, int? promoCode
             {
                 Console.WriteLine($"Error setting employee ID: {ex.Message}");
             }
+        }
+        public async Task<List<Orders>> GetOrdersByClientId(int clientId)
+        {
+            var orders = new List<Orders>();
+
+            try
+            {
+                await using (var conn = new NpgsqlConnection(_connectionString))
+                {
+                    await conn.OpenAsync();
+
+                    var getOrdersQuery = @"
+                SELECT o.id, o.client_id, o.order_date, o.total_price, o.promo_code_id, o.pickup_location_id, o.status
+                FROM Orders o
+                WHERE o.client_id = @ClientId
+                ORDER BY o.order_date DESC";
+
+                    await using (var cmd = new NpgsqlCommand(getOrdersQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ClientId", clientId);
+
+                        await using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                var order = new Orders
+                                {
+                                    Id = reader.GetInt32(0),
+                                    ClientId = reader.GetInt32(1),
+                                    OrderDate = reader.GetDateTime(2),
+                                    TotalPrice = reader.GetDecimal(3),
+                                    PromoCodeId = reader.IsDBNull(4) ? null : reader.GetInt32(4),
+                                    PickupLocationId = reader.IsDBNull(5) ? null : reader.GetInt32(5),
+                                    Status = reader.GetString(6)
+                                };
+                                orders.Add(order);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return orders;
         }
 
     }

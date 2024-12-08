@@ -74,11 +74,13 @@ EXECUTE FUNCTION recalculate_order_total_price_on_delete();
 CREATE OR REPLACE FUNCTION log_product_addition()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO Log (employee_id, action_id, action_date)
-    VALUES (current_setting('app.employee_id')::INT, 
-            (SELECT id FROM Action WHERE name = 'Add Product'), 
-            CURRENT_TIMESTAMP);
-    
+    IF current_setting('app.employee_id', true) IS NOT NULL THEN
+        INSERT INTO Log (employee_id, action_id, action_date)
+        VALUES (current_setting('app.employee_id')::INT, 
+                (SELECT id FROM Action WHERE name = 'Add Product'), 
+                CURRENT_TIMESTAMP);
+    END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
