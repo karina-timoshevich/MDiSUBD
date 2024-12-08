@@ -1,0 +1,39 @@
+﻿@model List<LabRab6_MDiSUBD_Timoshevich.Entities.CartItem>
+
+<h2>Your Cart</h2>
+@if (Model != null && Model.Count > 0)
+{
+    <table>
+        <thead>
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.ProductName</td>
+                <td>@item.Price.ToString("C")</td>
+                <td>@item.Quantity</td>
+                <td>@(item.Quantity * item.Price).ToString("C")</td>
+                <td>
+                    <form method="post" asp-action="RemoveFromCart" asp-route-id="@item.Id">
+                        <button type="submit">Remove</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <p>Total: @Model.Sum(i => i.Quantity * i.Price).ToString("C")</p>
+    <a href="@Url.Action("Checkout", "Order")">Proceed to Checkout</a>
+}
+else
+{
+    <p>Your cart is empty.</p>
+}

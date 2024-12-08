@@ -24,7 +24,6 @@ public class ReviewController : Controller
     }
 
     [HttpPost]
-    [HttpPost]
     public async Task<IActionResult> AddReview(int rating, string text)
     {
         var clientId = HttpContext.Session.GetInt32("ClientId");

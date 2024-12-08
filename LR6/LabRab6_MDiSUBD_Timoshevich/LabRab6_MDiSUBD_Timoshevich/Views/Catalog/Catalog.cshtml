@@ -16,6 +16,18 @@
         padding: 8px;
         text-align: left;
     }
+
+    .add-to-cart-btn {
+        padding: 5px 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    .add-to-cart-btn:hover {
+        background-color: #45a049;
+    }
 </style>
 
 <table>
@@ -28,6 +40,7 @@
         <th>Manufacturer</th>
         <th>Unit of Measure</th>
         <th>Quantity</th>
+        <th>Action</th>
     </tr>
     </thead>
     <tbody>
@@ -41,6 +54,12 @@
             <td>@product.ManufacturerName</td>
             <td>@product.UnitOfMeasure</td>
             <td>@product.Quantity</td>
+            <td>
+                <form method="post" action="@Url.Action("AddToCart", "Catalog")">
+                    <input type="hidden" name="productId" value="@product.Id" />
+                    <button type="submit" class="add-to-cart-btn">Add to Cart</button>
+                </form>
+            </td>
         </tr>
     }
     </tbody>
