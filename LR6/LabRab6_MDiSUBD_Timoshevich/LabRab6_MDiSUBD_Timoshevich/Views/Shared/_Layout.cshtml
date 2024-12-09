@@ -11,29 +11,43 @@
 </head>
 <body>
 <header>
-    <!-- Навигация -->
     <nav>
         <ul>
             <li><a href="/">Home</a></li>
-            <li><a href="/Account/Login">Login</a></li>
             <li><a href="/Catalog/Catalog">Catalog</a></li>
             <li><a href="/PickupLocation/Index">Pickup locations</a></li>
             <li><a href="/Review/Index">Reviews</a></li>
-            <li><a href="/Cart/Index">Cart</a></li>
-            <li><a href="/Orders/Index">Orders</a></li>
-        @if (Context.Session.GetString("UserRole") == "Worker")
+
+            @if (Context.Session.GetString("UserRole") == null)
             {
-                <li><a href="/EmployeeOrders/Index">All orders</a></li>
+                <li><a href="/Account/Login">Login</a></li>
             }
-            @if (Context.Session.GetString("UserRole") == "Admin")
+            else
             {
-                <li><a href="/Job/Index">Job</a></li>
+                if (Context.Session.GetString("UserRole") == "Client")
+                {
+                    <li><a href="/Cart/Index">Cart</a></li>
+                    <li><a href="/Orders/Index">Orders</a></li>
+                }
+                else if (Context.Session.GetString("UserRole") == "Worker")
+                {
+                    <li><a href="/EmployeeOrders/Index">All orders</a></li>
+                }
+                else if (Context.Session.GetString("UserRole") == "Admin")
+                {
+                    <li><a href="/EmployeeOrders/Index">All orders</a></li>
+                    <li><a href="/Job/Index">Job</a></li>
+                }
+
+                <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" style="background:none;border:none;color:blue;cursor:pointer;">Logout</button>
+                    </form>
+                </li>
             }
-            <li><form asp-controller="Account" asp-action="Logout" method="post">
-                    <button type="submit" style="background:none;border:none;color:blue;cursor:pointer;">Logout</button>
-                </form></li>
         </ul>
     </nav>
+
 </header>
 <div class="container">
     <main role="main" class="pb-3">
