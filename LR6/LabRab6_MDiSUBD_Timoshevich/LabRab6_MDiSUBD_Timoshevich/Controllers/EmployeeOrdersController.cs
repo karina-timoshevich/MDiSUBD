@@ -29,7 +29,6 @@ namespace LabRab6_MDiSUBD_Timoshevich.Controllers
 
             var orders = await _dbService.GetOrdersForWorkerAsync();
 
-            // Создаем список для статусов
             var statuses = new List<SelectListItem>
             {
                 new SelectListItem { Value = "Pending", Text = "Pending" },
@@ -37,10 +36,16 @@ namespace LabRab6_MDiSUBD_Timoshevich.Controllers
                 new SelectListItem { Value = "Delivered", Text = "Delivered" },
                 new SelectListItem { Value = "Canceled", Text = "Canceled" }
             };
+           
+            var orderViewModels = orders.Select(order => new OrderViewModel
+            {
+                Order = order,
+                SelectedStatus = order.Status  
+            }).ToList();
 
             var viewModel = new OrdersViewModel
             {
-                Orders = orders,
+                Orders = orderViewModels,
                 OrderStatuses = statuses
             };
 
@@ -50,20 +55,26 @@ namespace LabRab6_MDiSUBD_Timoshevich.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdateOrderStatus(int orderId, string selectedStatus)
         {
-            // Пример получения выбранного статуса
+            Console.WriteLine($"Received orderId: {orderId}, selectedStatus: {selectedStatus}");
+
+            if (string.IsNullOrEmpty(selectedStatus))
+            {
+                ModelState.AddModelError("", "Please select a status.");
+                return RedirectToAction("Index");
+            }
+            Console.WriteLine($"Updating OrderId: {orderId} with Status: {selectedStatus}");
             var result = await _dbService.UpdateOrderStatusAsync(orderId, selectedStatus);
 
             if (result)
             {
-                // Статус успешно обновлён
-                return RedirectToAction("Index"); // Перенаправить на страницу со списком заказов
+                return RedirectToAction("Index"); 
             }
             else
             {
-                // Ошибка при обновлении статуса
-                return View(); // Возвращаем на текущую страницу с ошибкой
+                return View(); 
             }
         }
+
 
     }
 }

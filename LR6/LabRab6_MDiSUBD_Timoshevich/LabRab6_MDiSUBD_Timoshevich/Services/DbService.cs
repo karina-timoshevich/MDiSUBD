@@ -1045,6 +1045,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
             await using (var conn = new NpgsqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
+                Console.WriteLine($"Executing SQL update for OrderId: {orderId}, Status: {newStatus}");
 
                 var query = "UPDATE Orders SET status = @Status WHERE id = @OrderId";
                 await using (var cmd = new NpgsqlCommand(query, conn))
@@ -1053,6 +1054,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                     cmd.Parameters.AddWithValue("@OrderId", orderId);
 
                     var rowsAffected = await cmd.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Rows affected гзв: {rowsAffected}");
                     return rowsAffected > 0;
                 }
             }

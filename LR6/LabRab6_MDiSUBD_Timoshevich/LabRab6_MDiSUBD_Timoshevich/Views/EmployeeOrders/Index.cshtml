@@ -36,26 +36,37 @@
         </tr>
         </thead>
         <tbody>
-        @foreach (var order in Model.Orders)
+        @foreach (var orderViewModel in Model.Orders)
         {
             <tr>
-                <td>@order.Id</td>
-                <td>@order.ClientId</td>
-                <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                <td>@order.TotalPrice.ToString("C", CultureInfo.CurrentCulture)</td>
-                <td>@(order.PromoCodeId.HasValue ? order.PromoCodeId.ToString() : "None")</td>
-                <td>@order.PickupLocationId</td>
+                <td>@orderViewModel.Order.Id</td>
+                <td>@orderViewModel.Order.ClientId</td>
+                <td>@orderViewModel.Order.OrderDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@orderViewModel.Order.TotalPrice.ToString("C", CultureInfo.CurrentCulture)</td>
+                <td>@(orderViewModel.Order.PromoCodeId.HasValue ? orderViewModel.Order.PromoCodeId.ToString() : "None")</td>
+                <td>@orderViewModel.Order.PickupLocationId</td>
                 <td>
                     <form method="post" action="@Url.Action("UpdateOrderStatus", "EmployeeOrders")">
-                        @Html.DropDownListFor(
-                            model => model.SelectedStatus,
-                            Model.OrderStatuses,
-                            new { @class = "form-control" }
-                        )
-                        <input type="hidden" name="orderId" value="@order.Id" />
+                        <select name="selectedStatus" class="form-control">
+                            @foreach (var status in Model.OrderStatuses)
+                            {
+                                if (orderViewModel.SelectedStatus == status.Value)
+                                {
+                                    <option value="@status.Value" selected>@status.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@status.Value">@status.Text</option>
+                                }
+                            }
+                        </select>
+
+                        <input type="hidden" name="orderId" value="@orderViewModel.Order.Id" />
                         <button type="submit">Update Status</button>
                     </form>
+
                 </td>
+
             </tr>
         }
         </tbody>
@@ -65,3 +76,12 @@ else
 {
     <p>No orders found.</p>
 }
+<script>
+    document.querySelectorAll('form').forEach(form => {
+        form.onsubmit = function() {
+            console.log('Order ID:', form.querySelector('input[name="orderId"]').value);
+            console.log('Selected Status:', form.querySelector('select[name="selectedStatus"]').value);
+        };
+    });
+
+</script>

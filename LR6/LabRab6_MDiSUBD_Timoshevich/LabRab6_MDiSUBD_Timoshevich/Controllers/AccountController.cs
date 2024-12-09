@@ -41,7 +41,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Controllers
             else if (employee != null && employee.Password == model.Password)
             {
                 HttpContext.Session.SetInt32("EmployeeId", employee.Id);
-                await _dbService.SetEmployeeIdInSession(employee.Id);
+               // await _dbService.SetEmployeeIdInSession(employee.Id);
                 ViewBag.WelcomeMessage = $"Hello, Employee {employee.FirstName} {employee.LastName} ({employee.Email})";
                 return RedirectToAction("Index", "Home");
             }

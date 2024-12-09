@@ -6,7 +6,12 @@ namespace LabRab6_MDiSUBD_Timoshevich.Models;
 
 public class OrdersViewModel
 {
-    public List<Orders> Orders { get; set; }
+    public List<OrderViewModel> Orders { get; set; }
     public List<SelectListItem> OrderStatuses { get; set; }
-    public string SelectedStatus { get; set; } 
+}
+
+public class OrderViewModel
+{
+    public Orders Order { get; set; }
+    public string SelectedStatus { get; set; }  // Для каждого заказа свой статус
 }
