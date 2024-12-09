@@ -123,7 +123,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 {
                     await conn.OpenAsync();
 
-                    var query = "SELECT id, first_name, last_name, email, password FROM employee WHERE email = @Email";
+                    var query = "SELECT id, first_name, last_name, email, password, position_id FROM Employee WHERE email = @Email";
                     await using (var cmd = new NpgsqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Email", email);
@@ -138,7 +138,9 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                                     FirstName = reader["first_name"].ToString(),
                                     LastName = reader["last_name"].ToString(),
                                     Email = reader["email"].ToString(),
-                                    Password = reader["password"].ToString()
+                                    Password = reader["password"].ToString(),
+                                    PositionId = reader.IsDBNull(5) ? 0 : reader.GetInt32(5) // Проверка на NULL
+
                                 };
                             }
                         }
@@ -1138,5 +1140,35 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
             Console.WriteLine($"Error: {ex.Message}");
         }
     }
+    public async Task<string> GetUserRoleByEmailAsync(string email)
+    {
+        await using (var conn = new NpgsqlConnection(_connectionString))
+        {
+            await conn.OpenAsync();
+
+            var clientQuery = "SELECT COUNT(*) FROM Client WHERE email = @Email";
+            await using (var clientCmd = new NpgsqlCommand(clientQuery, conn))
+            {
+                clientCmd.Parameters.AddWithValue("@Email", email);
+                var isClient = (long)await clientCmd.ExecuteScalarAsync() > 0;
+                if (isClient) return "Client";
+            }
+
+            var employeeQuery = "SELECT position_id FROM Employee WHERE email = @Email";
+            await using (var employeeCmd = new NpgsqlCommand(employeeQuery, conn))
+            {
+                employeeCmd.Parameters.AddWithValue("@Email", email);
+                var positionId = await employeeCmd.ExecuteScalarAsync();
+
+                if (positionId != null)
+                {
+                    return (int)positionId == 8 ? "Admin" : "Worker";
+                }
+            }
+        }
+
+        return "Unknown";
+    }
+
     }
 }
