@@ -60,6 +60,7 @@ public class CartController : Controller
         }
 
         // Обновляем цену в корзине
+        ViewBag.TotalPrice = totalPrice;
         await _dbService.UpdateCartTotalPrice(clientId.Value, totalPrice);
 
         TempData["SuccessMessage"] = "Your cart has been updated.";

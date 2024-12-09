@@ -1,0 +1,67 @@
+﻿@using System.Globalization
+@model LabRab6_MDiSUBD_Timoshevich.Models.OrdersViewModel
+
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    table, th, td {
+        border: 1px solid #ddd;
+    }
+    th, td {
+        padding: 10px;
+        text-align: center;
+    }
+    th {
+        background-color: #f4f4f4;
+    }
+</style>
+
+<h2>Orders</h2>
+
+@if (Model != null && Model.Orders != null && Model.Orders.Count > 0)
+{
+    <table>
+        <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Client ID</th>
+            <th>Order Date</th>
+            <th>Total Price</th>
+            <th>Promo Code</th>
+            <th>Pickup Location</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var order in Model.Orders)
+        {
+            <tr>
+                <td>@order.Id</td>
+                <td>@order.ClientId</td>
+                <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@order.TotalPrice.ToString("C", CultureInfo.CurrentCulture)</td>
+                <td>@(order.PromoCodeId.HasValue ? order.PromoCodeId.ToString() : "None")</td>
+                <td>@order.PickupLocationId</td>
+                <td>
+                    <form method="post" action="@Url.Action("UpdateOrderStatus", "EmployeeOrders")">
+                        @Html.DropDownListFor(
+                            model => model.SelectedStatus,
+                            Model.OrderStatuses,
+                            new { @class = "form-control" }
+                        )
+                        <input type="hidden" name="orderId" value="@order.Id" />
+                        <button type="submit">Update Status</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No orders found.</p>
+}
