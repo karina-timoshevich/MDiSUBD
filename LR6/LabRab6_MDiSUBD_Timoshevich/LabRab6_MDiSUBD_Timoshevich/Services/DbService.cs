@@ -1059,6 +1059,84 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 }
             }
         }
+ public async Task<List<Job>> GetAllJobsAsync()
+    {
+        var jobs = new List<Job>();
 
+        try
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = "SELECT id, title, description FROM Job";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    await using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            jobs.Add(new Job
+                            {
+                                Id = reader.GetInt32(0),
+                                Title = reader.GetString(1),
+                                Description = reader.GetString(2)
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+
+        return jobs;
+    }
+
+    public async Task AddJobAsync(string title, string description)
+    {
+        try
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = "INSERT INTO Job (title, description) VALUES (@Title, @Description)";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Title", title);
+                    cmd.Parameters.AddWithValue("@Description", description);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    public async Task UpdateJobAsync(int id, string title, string description)
+    {
+        try
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = "UPDATE Job SET title = @Title, description = @Description WHERE id = @Id";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    cmd.Parameters.AddWithValue("@Title", title);
+                    cmd.Parameters.AddWithValue("@Description", description);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
     }
 }
