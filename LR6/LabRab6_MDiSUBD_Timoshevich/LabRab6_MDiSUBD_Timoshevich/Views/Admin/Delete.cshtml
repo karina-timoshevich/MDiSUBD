@@ -1,0 +1,13 @@
+﻿@{
+    ViewData["Title"] = "Delete Client";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<p>Are you sure you want to delete the client <strong>@Model.FirstName @Model.LastName</strong>?</p>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" name="Id" value="@Model.Id" />
+    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+    <a href="@Url.Action("Index", "Client")" class="btn btn-secondary">Cancel</a>
+</form>

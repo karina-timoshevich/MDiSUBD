@@ -1195,5 +1195,142 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
             return false;
         }
     }
+    public async Task<bool> UpdateClientAsync(int id, Client client)
+    {
+        try
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+    
+                var query = "UPDATE Client SET first_name = @FirstName, last_name = @LastName, date_of_birth = @DateOfBirth, " +
+                            "phone_number = @PhoneNumber, password = @Password, email = @Email WHERE id = @Id";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    cmd.Parameters.AddWithValue("@FirstName", client.FirstName);
+                    cmd.Parameters.AddWithValue("@LastName", client.LastName);
+                    cmd.Parameters.AddWithValue("@DateOfBirth", client.DateOfBirth);
+                    cmd.Parameters.AddWithValue("@PhoneNumber", client.PhoneNumber);
+                    cmd.Parameters.AddWithValue("@Password", client.Password);
+                    cmd.Parameters.AddWithValue("@Email", client.Email);
+    
+                    var result = await cmd.ExecuteNonQueryAsync();
+                    return result > 0;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            return false;
+        }
+    }
+    public async Task<bool> DeleteClientAsync(int id)
+    {
+        try
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+    
+                var query = "DELETE FROM Client WHERE id = @Id";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    var result = await cmd.ExecuteNonQueryAsync();
+                    return result > 0;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            return false;
+        }
+    }
+    public async Task<List<Client>> GetAllClientsAsync()
+    {
+        var clients = new List<Client>();
+
+        try
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                var query = "SELECT id, first_name, last_name, date_of_birth, phone_number, password, email FROM Client";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    await using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            clients.Add(new Client
+                            {
+                                Id = reader.GetInt32(0),
+                                FirstName = reader.GetString(1),
+                                LastName = reader.GetString(2),
+                                DateOfBirth = reader.IsDBNull(3) ? null : reader.GetDateTime(3),
+                                PhoneNumber = reader.GetString(4),
+                                Password = reader.GetString(5),
+                                Email = reader.GetString(6)
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+
+        return clients;
+    }
+    public async Task<Client> GetClientByIdAsync(int id)
+    {
+        try
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                var query = "SELECT id, first_name, last_name, date_of_birth, phone_number, password, email FROM Client WHERE id = @Id";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", id);
+                
+                    await using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return new Client
+                            {
+                                Id = reader.GetInt32(0),
+                                FirstName = reader.GetString(1),
+                                LastName = reader.GetString(2),
+                                DateOfBirth = reader.IsDBNull(3) ? null : reader.GetDateTime(3),
+                                PhoneNumber = reader.GetString(4),
+                                Password = reader.GetString(5),
+                                Email = reader.GetString(6)
+                            };
+                        }
+                        else
+                        {
+                            return null; // Если клиент не найден, возвращаем null
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            return null; // Если произошла ошибка, также возвращаем null
+        }
+    }
+
+    
     }
 }

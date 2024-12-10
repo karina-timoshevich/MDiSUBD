@@ -1,0 +1,32 @@
+﻿@model IEnumerable<LabRab6_MDiSUBD_Timoshevich.Entities.Client>
+
+<h2>Manage Clients</h2>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Email</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var client in Model)
+    {
+        <tr>
+            <td>@client.Id</td>
+            <td>@client.FirstName</td>
+            <td>@client.LastName</td>
+            <td>@client.Email</td>
+            <td>
+                <a href="@Url.Action("Edit", "Admin", new { id = client.Id })">Edit</a> |
+                <a href="@Url.Action("Delete", "Admin", new { id = client.Id })">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<a href="@Url.Action("Create", "Admin")">Add New Client</a>
