@@ -1169,6 +1169,31 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
         return "Unknown";
     }
+    public async Task<bool> AddFAQAsync(string question, string answer)
+    {
+        try
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
 
+                var query = "INSERT INTO FAQ (question, answer, date_added) VALUES (@Question, @Answer, @DateAdded)";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Question", question);
+                    cmd.Parameters.AddWithValue("@Answer", answer);
+                    cmd.Parameters.AddWithValue("@DateAdded", DateTime.UtcNow);
+
+                    var result = await cmd.ExecuteNonQueryAsync();
+                    return result > 0; // Возвращаем true, если запись была добавлена
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            return false;
+        }
+    }
     }
 }
