@@ -26,8 +26,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 {
                     await conn.OpenAsync();
 
-                    // Запрос на выборку всех продуктов с дополнительными данными (тип, производитель и т.д.)
-                    var query = @"
+                   var query = @"
                 SELECT 
                     p.Id, p.Name, p.Description, p.Price, p.Quantity,
                     pt.name AS ProductType, 
@@ -1331,6 +1330,195 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
         }
     }
 
-    
+    public async Task<bool> AddProduct(Product product)
+    {
+        try
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                var query = @"
+                INSERT INTO Product (name, description, price, product_type_id, manufacturer_id, unit_of_measure_id, quantity) 
+                VALUES (@name, @description, @price, @product_type_id, @manufacturer_id, @unit_of_measure_id, @quantity)";
+            
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("name", product.Name);
+                    cmd.Parameters.AddWithValue("description", (object)product.Description ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("price", product.Price);
+                    cmd.Parameters.AddWithValue("product_type_id", product.ProductTypeId); // предполагаем, что ProductTypeId уже передан
+                    cmd.Parameters.AddWithValue("manufacturer_id", product.ManufacturerId); // предполагаем, что ManufacturerId уже передан
+                    cmd.Parameters.AddWithValue("unit_of_measure_id", product.UnitOfMeasureId); // предполагаем, что UnitOfMeasureId уже передан
+                    cmd.Parameters.AddWithValue("quantity", product.Quantity);
+
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            return false;
+        }
+    }
+  public async Task<bool> UpdateProduct(Product product)
+{
+    try
+    {
+        Console.WriteLine("Updating product in the database...");
+        Console.WriteLine($"Product data: Id={product.Id}, Name={product.Name}, Description={product.Description}, Price={product.Price}, ProductTypeId={product.ProductTypeId}, ManufacturerId={product.ManufacturerId}, UnitOfMeasureId={product.UnitOfMeasureId}, Quantity={product.Quantity}");
+
+        await using (var conn = new NpgsqlConnection(_connectionString))
+        {
+            await conn.OpenAsync();
+            Console.WriteLine("Connection to database opened.");
+
+            var query = @"
+                UPDATE Product 
+                SET name = @name, description = @description, price = @price, 
+                    product_type_id = @product_type_id, manufacturer_id = @manufacturer_id, 
+                    unit_of_measure_id = @unit_of_measure_id, quantity = @quantity
+                WHERE id = @id";
+
+            await using (var cmd = new NpgsqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("id", product.Id);
+                cmd.Parameters.AddWithValue("name", product.Name);
+                cmd.Parameters.AddWithValue("description", (object)product.Description ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("price", product.Price);
+                cmd.Parameters.AddWithValue("product_type_id", product.ProductTypeId);
+                cmd.Parameters.AddWithValue("manufacturer_id", product.ManufacturerId);
+                cmd.Parameters.AddWithValue("unit_of_measure_id", product.UnitOfMeasureId);
+                cmd.Parameters.AddWithValue("quantity", product.Quantity);
+
+                Console.WriteLine("Executing query...");
+                await cmd.ExecuteNonQueryAsync();
+                Console.WriteLine("Query executed successfully.");
+            }
+        }
+
+        return true;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error occurred while updating product: {ex.Message}");
+        return false;
+    }
+}
+
+    public async Task<bool> DeleteProduct(int id)
+    {
+        try
+        {
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                var query = @"DELETE FROM Product WHERE id = @id";
+
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("id", id);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            return false;
+        }
+    }
+public async Task<IEnumerable<ProductType>> GetProductTypes()
+{
+    var productTypes = new List<ProductType>();
+
+    await using (var conn = new NpgsqlConnection(_connectionString))
+    {
+        await conn.OpenAsync();
+        var query = "SELECT id, name FROM ProductType";
+
+        await using (var cmd = new NpgsqlCommand(query, conn))
+        {
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    productTypes.Add(new ProductType
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1)
+                    });
+                }
+            }
+        }
+    }
+
+    return productTypes;
+}
+
+public async Task<IEnumerable<Manufacturer>> GetManufacturers()
+{
+    var manufacturers = new List<Manufacturer>();
+
+    await using (var conn = new NpgsqlConnection(_connectionString))
+    {
+        await conn.OpenAsync();
+        var query = "SELECT id, name, address, phone FROM Manufacturer";
+
+        await using (var cmd = new NpgsqlCommand(query, conn))
+        {
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    manufacturers.Add(new Manufacturer
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        Address = reader.GetString(2),
+                        Phone = reader.GetString(3)
+                    });
+                }
+            }
+        }
+    }
+
+    return manufacturers;
+}
+
+public async Task<IEnumerable<UnitOfMeasure>> GetUnitsOfMeasure()
+{
+    var units = new List<UnitOfMeasure>();
+
+    await using (var conn = new NpgsqlConnection(_connectionString))
+    {
+        await conn.OpenAsync();
+        var query = "SELECT id, name FROM UnitOfMeasure";
+
+        await using (var cmd = new NpgsqlCommand(query, conn))
+        {
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    units.Add(new UnitOfMeasure
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1)
+                    });
+                }
+            }
+        }
+    }
+
+    return units;
+}
+
     }
 }
