@@ -124,14 +124,16 @@ CREATE TRIGGER trigger_log_product_deletion
 AFTER DELETE ON Product
 FOR EACH ROW
 EXECUTE FUNCTION log_product_deletion();
-
+--fixed
 CREATE OR REPLACE FUNCTION log_order_status_update()
 RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO Log (employee_id, action_id, action_date)
-    VALUES (current_setting('app.employee_id')::INT, 
-            (SELECT id FROM Action WHERE name = 'Update Order Status'), 
-            CURRENT_TIMESTAMP);
+    VALUES (
+        COALESCE(current_setting('app.employee_id', true)::INT, NULL), 
+        (SELECT id FROM Action WHERE name = 'Update Order Status'), 
+        CURRENT_TIMESTAMP
+    );
 
     RETURN NEW;
 END;
@@ -141,7 +143,7 @@ CREATE TRIGGER trigger_log_order_status_update
 AFTER UPDATE OF status ON Orders
 FOR EACH ROW
 EXECUTE FUNCTION log_order_status_update();
-
+--fixed
 CREATE OR REPLACE FUNCTION log_job_addition()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -240,3 +242,26 @@ CREATE TRIGGER trigger_recalculate_cart_total_price_after_delete
 AFTER DELETE ON CartItem
 FOR EACH ROW
 EXECUTE FUNCTION recalculate_cart_total_price_on_delete();
+
+CREATE OR REPLACE FUNCTION recalculate_cart_total_price_on_discount_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Cart
+    SET total_price = (
+        SELECT COALESCE(SUM(ci.quantity * p.price), 0)
+        FROM CartItem ci
+        JOIN Product p ON ci.product_id = p.id
+        WHERE ci.cart_id = NEW.client_id
+    ) * (1 - (COALESCE(NEW.discount, 0) / 100))
+    WHERE client_id = NEW.client_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS recalculate_cart_total_price_on_discount_update ON Cart;
+
+CREATE TRIGGER recalculate_cart_total_price_on_discount_update
+AFTER UPDATE OF discount ON Cart
+FOR EACH ROW
+EXECUTE FUNCTION recalculate_cart_total_price_on_discount_update();
