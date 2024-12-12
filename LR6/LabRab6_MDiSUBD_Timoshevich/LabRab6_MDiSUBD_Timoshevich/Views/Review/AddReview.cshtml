@@ -2,13 +2,13 @@
 
 <h2>Add Review</h2>
 <form asp-action="AddReview" method="post">
-    <div>
-        <label>Rating:</label>
-        <input type="number" name="rating" min="1" max="5" required />
+    <div class="form-group">
+        <label for="rating">Rating:</label>
+        <input type="number" class="form-control" id="rating" name="rating" min="1" max="5" required />
     </div>
-    <div>
-        <label>Text:</label>
-        <textarea name="text"></textarea>
+    <div class="form-group">
+        <label for="text">Text:</label>
+        <textarea class="form-control" id="text" name="text"></textarea>
     </div>
-    <button type="submit">Submit</button>
+    <button type="submit" class="btn btn-primary">Submit</button>
 </form>

@@ -2,6 +2,7 @@
 using LabRab6_MDiSUBD_Timoshevich.Services;
 using LabRab6_MDiSUBD_Timoshevich.Entities;
 using LabRab6_MDiSUBD_Timoshevich.Models;
+using Npgsql;
 
 namespace LabRab6_MDiSUBD_Timoshevich.Controllers
 {
@@ -42,7 +43,11 @@ namespace LabRab6_MDiSUBD_Timoshevich.Controllers
             else if (employee != null && employee.Password == model.Password)
             {
                 HttpContext.Session.SetInt32("EmployeeId", employee.Id);
-               // await _dbService.SetEmployeeIdInSession(employee.Id);
+                var employeeIdFromSession = HttpContext.Session.GetInt32("EmployeeId");
+                Console.WriteLine($"EmployeeId from session: {employeeIdFromSession}");
+
+               //await _dbService.SetEmployeeIdInSession(employee.Id);
+              // await _dbService.CheckEmployeeIdInSession();
                var role = employee.PositionId == 8 ? "Admin" : "Worker";
                HttpContext.Session.SetString("UserRole", role);
                Console.WriteLine($"Hello, {role} {employee.FirstName} {employee.LastName} ({employee.Email}) position {employee.PositionId}");
@@ -56,7 +61,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Controllers
 
             return View();
         }
-
+        
         [HttpGet]
         public IActionResult Register()
         {

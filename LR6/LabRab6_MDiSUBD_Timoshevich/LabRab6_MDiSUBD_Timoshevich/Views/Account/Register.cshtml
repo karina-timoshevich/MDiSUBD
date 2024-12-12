@@ -4,46 +4,47 @@
     ViewData["Title"] = "Register";
 }
 
-<h2>@ViewData["Title"]</h2>
+<h2 class="text-center mb-3">@ViewData["Title"]</h2>
 
-<form method="post">
-    <div>
-        <label for="FirstName">First Name</label>
-        <input type="text" id="FirstName" name="FirstName" value="@Model.FirstName" required />
-    </div>
-    <div>
-        <label for="LastName">Last Name</label>
-        <input type="text" id="LastName" name="LastName" value="@Model.LastName" required />
-    </div>
-    <div>
-        <label for="Email">Email</label>
-        <input type="email" id="Email" name="Email" value="@Model.Email" required />
-    </div>
-    <div>
-        <label for="DateOfBirth">Date of Birth</label>
-        <input type="date" id="DateOfBirth" name="DateOfBirth" value="@Model.DateOfBirth.ToString("yyyy-MM-dd")" required />
-    </div>
-    <div>
-        <label for="PhoneNumber">Phone Number (optional)</label>
-        <input type="text" id="PhoneNumber" name="PhoneNumber" value="@Model.PhoneNumber" />
-    </div>
-
-    <div>
-        <label for="Password">Password</label>
-        <input type="password" id="Password" name="Password" value="@Model.Password" required />
-    </div>
-    <div>
-        <label for="ConfirmPassword">Confirm Password</label>
-        <input type="password" id="ConfirmPassword" name="ConfirmPassword" value="@Model.ConfirmPassword" required />
-    </div>
-    <div>
-        <button type="submit">Register</button>
-    </div>
-</form>
+<div class="d-flex justify-content-center align-items-center vh-100">
+    <form method="post" class="w-50" style="max-width: 400px;">
+        <div class="form-group">
+            <label for="FirstName">First Name</label>
+            <input type="text" class="form-control" id="FirstName" name="FirstName" value="@Model.FirstName" required />
+        </div>
+        <div class="form-group">
+            <label for="LastName">Last Name</label>
+            <input type="text" class="form-control" id="LastName" name="LastName" value="@Model.LastName" required />
+        </div>
+        <div class="form-group">
+            <label for="Email">Email</label>
+            <input type="email" class="form-control" id="Email" name="Email" value="@Model.Email" required />
+        </div>
+        <div class="form-group">
+            <label for="DateOfBirth">Date of Birth</label>
+            <input type="date" class="form-control" id="DateOfBirth" name="DateOfBirth" value="@Model.DateOfBirth.ToString("yyyy-MM-dd")" required />
+        </div>
+        <div class="form-group">
+            <label for="PhoneNumber">Phone Number (optional)</label>
+            <input type="text" class="form-control" id="PhoneNumber" name="PhoneNumber" value="@Model.PhoneNumber" />
+        </div>
+        <div class="form-group">
+            <label for="Password">Password</label>
+            <input type="password" class="form-control" id="Password" name="Password" value="@Model.Password" required />
+        </div>
+        <div class="form-group">
+            <label for="ConfirmPassword">Confirm Password</label>
+            <input type="password" class="form-control" id="ConfirmPassword" name="ConfirmPassword" value="@Model.ConfirmPassword" required />
+        </div>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Register</button>
+        </div>
+    </form>
+</div>
 
 @if(ViewBag.ErrorMessage != null)
 {
-    <div style="color: red;">
+    <div class="text-center text-danger mt-3">
         <strong>@ViewBag.ErrorMessage</strong>
     </div>
 }

@@ -9,13 +9,33 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
     public class DbService
     {
         private readonly string _connectionString;
-
-        public DbService(IConfiguration configuration)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public DbService(IConfiguration configuration,IHttpContextAccessor httpContextAccessor)
         {
             _connectionString = configuration.GetValue<string>("ConnectionString")
                                 ?? throw new ArgumentNullException("ConnectionString is not configured");
+            _httpContextAccessor = httpContextAccessor;
         }
-
+        public async Task CheckEmployeeIdInSession()
+        {
+            
+            await using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+        
+                var query = "SHOW app.employee_id;";
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    var result = await cmd.ExecuteScalarAsync();
+                    Console.WriteLine($"Current app.employee_id: {result}");
+            
+                    if (result == null || result.ToString() == "")
+                    {
+                        Console.WriteLine("Error: app.employee_id is not set or is empty.");
+                    }
+                }
+            }
+        }
         public async Task<List<Product>> GetAllProducts()
         {
             var products = new List<Product>();
@@ -840,25 +860,24 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
         public async Task SetEmployeeIdInSession(int employeeId)
         {
-            try
+            await using (var conn = new NpgsqlConnection(_connectionString))
             {
-                await using (var conn = new NpgsqlConnection(_connectionString))
+                await conn.OpenAsync();
+                var query = $"SET LOCAL app.employee_id = {employeeId};";
+                var queryCheck = "SHOW app.employee_id;";
+                await using (var cmdCheck = new NpgsqlCommand(queryCheck, conn))
                 {
-                    await conn.OpenAsync();
+                    var result = await cmdCheck.ExecuteScalarAsync();
+                    Console.WriteLine($"Current from db app.employee_id: {result}");
+                }
 
-                    var setEmployeeIdQuery = "SET app.employee_id TO @EmployeeId";
-                    await using (var setEmployeeIdCmd = new NpgsqlCommand(setEmployeeIdQuery, conn))
-                    {
-                        setEmployeeIdCmd.Parameters.AddWithValue("@EmployeeId", employeeId);
-                        await setEmployeeIdCmd.ExecuteNonQueryAsync();
-                    }
+                await using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    await cmd.ExecuteNonQueryAsync();
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error setting employee ID: {ex.Message}");
-            }
         }
+
 
         public async Task<List<Orders>> GetOrdersByClientId(int clientId)
         {
@@ -927,9 +946,9 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
             await using (var conn = new NpgsqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
+               
                 var query = "UPDATE Cart SET total_price = @TotalPrice WHERE client_id = @ClientId";
 
-                // Логируем выполнение запроса
                 Console.WriteLine(
                     $"Executing query: {query}, Parameters: ClientId = {clientId}, TotalPrice = {totalPrice}");
 
@@ -972,7 +991,6 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 Console.WriteLine(
                     $"Connection opened for ClientId: {clientId}, ProductId: {productId}, Quantity: {quantity}");
 
-                // Если количество меньше 1, удаляем товар из корзины
                 if (quantity < 1)
                 {
                     var deleteQuery =
@@ -987,7 +1005,6 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                     }
                 }
 
-                // Обновляем количество товара
                 var updateQuery =
                     "UPDATE CartItem SET quantity = @Quantity WHERE cart_id = @ClientId AND product_id = @ProductId";
                 Console.WriteLine($"Executing update query: {updateQuery}");
@@ -1043,11 +1060,24 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
 
         public async Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus)
         {
+            var employeeId = _httpContextAccessor.HttpContext?.Session.GetInt32("EmployeeId");
+
+            // Если переменная сессии пустая, можно обработать этот случай
+            if (!employeeId.HasValue)
+            {
+                Console.WriteLine("Employee ID is not set in session.");
+                return false;
+            }
+
             await using (var conn = new NpgsqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
                 Console.WriteLine($"Executing SQL update for OrderId: {orderId}, Status: {newStatus}");
-
+                var setEmployeeIdQuery = $"SET app.employee_id = {employeeId};";
+                await using (var setCmd = new NpgsqlCommand(setEmployeeIdQuery, conn))
+                {
+                    await setCmd.ExecuteNonQueryAsync();
+                }
                 var query = "UPDATE Orders SET status = @Status WHERE id = @OrderId";
                 await using (var cmd = new NpgsqlCommand(query, conn))
                 {
@@ -1184,7 +1214,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                     cmd.Parameters.AddWithValue("@DateAdded", DateTime.UtcNow);
 
                     var result = await cmd.ExecuteNonQueryAsync();
-                    return result > 0; // Возвращаем true, если запись была добавлена
+                    return result > 0; 
                 }
             }
         }
@@ -1317,7 +1347,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                         }
                         else
                         {
-                            return null; // Если клиент не найден, возвращаем null
+                            return null;
                         }
                     }
                 }
@@ -1326,7 +1356,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
         catch (Exception ex)
         {
             Console.WriteLine($"Error: {ex.Message}");
-            return null; // Если произошла ошибка, также возвращаем null
+            return null; 
         }
     }
 

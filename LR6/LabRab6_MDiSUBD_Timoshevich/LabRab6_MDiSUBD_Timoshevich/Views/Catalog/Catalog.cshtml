@@ -2,36 +2,8 @@
 
 <h2>Product Catalog</h2>
 
-<style>
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-
-    table, th, td {
-        border: 1px solid black;
-    }
-
-    th, td {
-        padding: 8px;
-        text-align: left;
-    }
-
-    .add-to-cart-btn {
-        padding: 5px 10px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        cursor: pointer;
-    }
-
-    .add-to-cart-btn:hover {
-        background-color: #45a049;
-    }
-</style>
-
-<table>
-    <thead>
+<table class="table table-striped">
+    <thead class="thead-dark">
     <tr>
         <th>Name</th>
         <th>Description</th>
@@ -57,7 +29,7 @@
             <td>
                 <form method="post" action="@Url.Action("AddToCart", "Catalog")">
                     <input type="hidden" name="productId" value="@product.Id" />
-                    <button type="submit" class="add-to-cart-btn">Add to Cart</button>
+                    <button type="submit" class="btn btn-success">Add to Cart</button>
                 </form>
             </td>
         </tr>
