@@ -1062,7 +1062,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
         {
             var employeeId = _httpContextAccessor.HttpContext?.Session.GetInt32("EmployeeId");
 
-            // Если переменная сессии пустая, можно обработать этот случай
+           
             if (!employeeId.HasValue)
             {
                 Console.WriteLine("Employee ID is not set in session.");
@@ -1132,6 +1132,19 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
             await using (var conn = new NpgsqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
+                var employeeId = _httpContextAccessor.HttpContext?.Session.GetInt32("EmployeeId");
+
+                if (!employeeId.HasValue)
+                {
+                    Console.WriteLine("Employee ID is not set in session.");
+                    return;
+                }
+                var setEmployeeIdQuery = $"SET app.employee_id = {employeeId.Value};";
+                await using (var setCmd = new NpgsqlCommand(setEmployeeIdQuery, conn))
+                {
+                    await setCmd.ExecuteNonQueryAsync();
+                }
+
                 var query = "INSERT INTO Job (title, description) VALUES (@Title, @Description)";
                 await using (var cmd = new NpgsqlCommand(query, conn))
                 {
