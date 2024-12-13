@@ -143,7 +143,7 @@ CREATE TRIGGER trigger_log_order_status_update
 AFTER UPDATE OF status ON Orders
 FOR EACH ROW
 EXECUTE FUNCTION log_order_status_update();
---fixed
+
 CREATE OR REPLACE FUNCTION log_job_addition()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -177,6 +177,8 @@ CREATE TRIGGER trigger_log_job_deletion
 AFTER DELETE ON Job
 FOR EACH ROW
 EXECUTE FUNCTION log_job_deletion();
+--fixed
+
 
 CREATE OR REPLACE FUNCTION recalculate_cart_total_price_on_insert()
 RETURNS TRIGGER AS $$
