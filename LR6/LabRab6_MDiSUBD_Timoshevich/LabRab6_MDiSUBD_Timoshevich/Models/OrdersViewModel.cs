@@ -13,5 +13,5 @@ public class OrdersViewModel
 public class OrderViewModel
 {
     public Orders Order { get; set; }
-    public string SelectedStatus { get; set; }  // Для каждого заказа свой статус
+    public string SelectedStatus { get; set; }  
 }

@@ -36,7 +36,6 @@ public class ProductController : Controller
         return View(product);
     }
 
-// Edit POST
     [HttpPost]
     public async Task<IActionResult> Edit(int id, Product product)
     {

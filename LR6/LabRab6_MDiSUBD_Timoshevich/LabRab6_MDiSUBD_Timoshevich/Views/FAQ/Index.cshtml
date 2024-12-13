@@ -1,5 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Add FAQ";
+    var faqs = Model as List<LabRab6_MDiSUBD_Timoshevich.Entities.FAQ>;
 }
 
 <h2>Add FAQ</h2>
@@ -25,3 +26,33 @@
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
+<h3>Existing FAQs</h3>
+
+@if (faqs != null && faqs.Count > 0)
+{
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Question</th>
+            <th>Answer</th>
+            <th>Date Added</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var faq in faqs)
+        {
+            <tr>
+                <td>@faq.Id</td>
+                <td>@faq.Question</td>
+                <td>@faq.Answer</td>
+                <td>@faq.DateAdded.ToString("yyyy-MM-dd")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No FAQs available.</p>
+}

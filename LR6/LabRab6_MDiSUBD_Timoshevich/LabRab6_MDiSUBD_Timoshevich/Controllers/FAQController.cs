@@ -13,9 +13,10 @@ public class FAQController : Controller
     {
         _dbService = dbService;
     }
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        return View();
+        var faqs = await _dbService.GetFAQsAsync();
+        return View(faqs);
     }
 
     [HttpPost]
@@ -37,7 +38,7 @@ public class FAQController : Controller
         {
             ViewBag.Error = "An error occurred while adding the FAQ entry.";
         }
-
-        return View();
+        var faqs = await _dbService.GetFAQsAsync();
+        return View(faqs);
     }
 }

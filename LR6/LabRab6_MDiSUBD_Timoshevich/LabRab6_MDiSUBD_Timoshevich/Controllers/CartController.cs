@@ -50,16 +50,14 @@ public class CartController : Controller
         var cartItems = await _dbService.GetCartItemsByClientId(clientId.Value);
         decimal totalPrice = cartItems.Sum(item => item.Quantity * item.Price);
 
-        // Применяем промокод, если он есть
         if (promoCodeId.HasValue)
         {
             var discount = await _dbService.GetPromoCodeDiscount(promoCodeId.Value);
             Console.WriteLine($"Promo Code ID: {promoCodeId.Value}, Discount: {discount}%");
-            totalPrice -= totalPrice * (discount / 100);  // Скидка как процент
+            totalPrice -= totalPrice * (discount / 100);  
             Console.WriteLine($"Total price after discount: {totalPrice}");
         }
 
-        // Обновляем цену в корзине
         ViewBag.TotalPrice = totalPrice;
         await _dbService.UpdateCartTotalPrice(clientId.Value, totalPrice);
 
@@ -82,18 +80,15 @@ public class CartController : Controller
         if (promoCodeId.HasValue)
         {
             var discount = await _dbService.GetPromoCodeDiscount(promoCodeId.Value);
-            totalPrice -= totalPrice * (discount / 100); // Apply discount
+            totalPrice -= totalPrice * (discount / 100); 
         }
 
-        // Обновление цены в базе данных
         await _dbService.UpdateCartTotalPrice(clientId.Value, totalPrice);
 
-        ViewBag.TotalPrice = totalPrice;  // Передаем обновленную цену в View
+        ViewBag.TotalPrice = totalPrice;  
         TempData["SuccessMessage"] = "Promo code applied successfully!";
         return RedirectToAction("Index");
     }
-
-
 
     [HttpPost]
     public async Task<IActionResult> RemoveFromCart(int productId)
@@ -122,9 +117,8 @@ public class CartController : Controller
         var totalPrice = await _dbService.GetCartTotalPrice(clientId.Value);
         if (promoCodeId.HasValue)
         {
-            // Получаем скидку по промокоду
             var discount = await _dbService.GetPromoCodeDiscount(promoCodeId.Value);
-            totalPrice -= totalPrice * (discount / 100);  // Скидка как процент
+            totalPrice -= totalPrice * (discount / 100);  
         }
 
         await _dbService.CreateOrder(clientId.Value, pickupLocationId, promoCodeId, totalPrice);

@@ -33,7 +33,6 @@ public class ReviewController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        // Передаем три параметра в метод AddReview сервиса
         var isSuccess = await _dbService.AddReview(clientId.Value, rating, text);
 
         if (isSuccess)
@@ -45,7 +44,7 @@ public class ReviewController : Controller
             TempData["ErrorMessage"] = "Failed to add your review. Please try again.";
         }
 
-        return RedirectToAction("Index"); // Возврат к списку отзывов
+        return RedirectToAction("Index"); 
     }
 
 }

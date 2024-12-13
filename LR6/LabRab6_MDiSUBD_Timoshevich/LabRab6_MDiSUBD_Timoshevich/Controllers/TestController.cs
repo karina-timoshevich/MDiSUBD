@@ -1,6 +1,6 @@
 ﻿using LabRab6_MDiSUBD_Timoshevich.Services;
 using Microsoft.AspNetCore.Mvc;
-using LabRab6_MDiSUBD_Timoshevich.Entities;  // Используем пространство имен Entities
+using LabRab6_MDiSUBD_Timoshevich.Entities;  
 
 namespace LabRab6_MDiSUBD_Timoshevich.Controllers
 {
@@ -15,9 +15,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Получаем список продуктов
             var products = await _dbService.GetAllProducts();
-            // Передаем продукты в представление через ViewBag
             ViewBag.Products = products;
             return View();
         }

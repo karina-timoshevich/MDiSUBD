@@ -85,7 +85,7 @@ public class AdminController : Controller
             }
             catch (Exception ex)
             {
-                ViewBag.Error = ex.Message; // В случае ошибки выводим сообщение
+                ViewBag.Error = ex.Message; 
             }
         }
 

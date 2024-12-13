@@ -158,7 +158,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                                     LastName = reader["last_name"].ToString(),
                                     Email = reader["email"].ToString(),
                                     Password = reader["password"].ToString(),
-                                    PositionId = reader.IsDBNull(5) ? 0 : reader.GetInt32(5) // Проверка на NULL
+                                    PositionId = reader.IsDBNull(5) ? 0 : reader.GetInt32(5) 
 
                                 };
                             }
@@ -183,7 +183,6 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 {
                     await conn.OpenAsync();
 
-                    // Запрос для получения сотрудника по email и password
                     await using (var cmd = new NpgsqlCommand(
                                      "SELECT id, first_name, last_name, phone, email, password FROM Employee WHERE email = @email AND password = @password",
                                      conn))
@@ -306,7 +305,6 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                 {
                     await conn.OpenAsync();
 
-                    // Запрос на выборку всех пунктов выдачи
                     var query = "SELECT Id, Name, Address FROM PickupLocation";
                     await using (var cmd = new NpgsqlCommand(query, conn))
                     {
@@ -730,8 +728,8 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                                 {
                                     if (await reader.ReadAsync())
                                     {
-                                        cartId = reader.GetInt32(0); // Получаем cartId
-                                        totalPrice = reader.GetDecimal(1); // Получаем totalPrice
+                                        cartId = reader.GetInt32(0); 
+                                        totalPrice = reader.GetDecimal(1); 
                                     }
                                     else
                                     {
@@ -1390,9 +1388,9 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
                     cmd.Parameters.AddWithValue("name", product.Name);
                     cmd.Parameters.AddWithValue("description", (object)product.Description ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("price", product.Price);
-                    cmd.Parameters.AddWithValue("product_type_id", product.ProductTypeId); // предполагаем, что ProductTypeId уже передан
-                    cmd.Parameters.AddWithValue("manufacturer_id", product.ManufacturerId); // предполагаем, что ManufacturerId уже передан
-                    cmd.Parameters.AddWithValue("unit_of_measure_id", product.UnitOfMeasureId); // предполагаем, что UnitOfMeasureId уже передан
+                    cmd.Parameters.AddWithValue("product_type_id", product.ProductTypeId); 
+                    cmd.Parameters.AddWithValue("manufacturer_id", product.ManufacturerId); 
+                    cmd.Parameters.AddWithValue("unit_of_measure_id", product.UnitOfMeasureId); 
                     cmd.Parameters.AddWithValue("quantity", product.Quantity);
 
                     await cmd.ExecuteNonQueryAsync();
@@ -1417,6 +1415,7 @@ namespace LabRab6_MDiSUBD_Timoshevich.Services
         await using (var conn = new NpgsqlConnection(_connectionString))
         {
             await conn.OpenAsync();
+            
             Console.WriteLine("Connection to database opened.");
 
             var query = @"
@@ -1562,6 +1561,40 @@ public async Task<IEnumerable<UnitOfMeasure>> GetUnitsOfMeasure()
 
     return units;
 }
+public async Task<List<FAQ>> GetFAQsAsync()
+{
+    var faqs = new List<FAQ>();
 
+    try
+    {
+        await using (var conn = new NpgsqlConnection(_connectionString))
+        {
+            await conn.OpenAsync();
+            var query = "SELECT id, question, answer, date_added FROM FAQ ORDER BY date_added DESC";
+            await using (var cmd = new NpgsqlCommand(query, conn))
+            {
+                await using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        faqs.Add(new FAQ
+                        {
+                            Id = reader.GetInt32(0),
+                            Question = reader.GetString(1),
+                            Answer = reader.GetString(2),
+                            DateAdded = reader.IsDBNull(3) ? DateTime.MinValue : reader.GetDateTime(3)
+                        });
+                    }
+                }
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error fetching FAQs: {ex.Message}");
+    }
+
+    return faqs;
+}
     }
 }
